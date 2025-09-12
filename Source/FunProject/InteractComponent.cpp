@@ -32,7 +32,6 @@ void UInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 
 void UInteractComponent::TryInteract()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow, TEXT("Trying to Interact"));
 	AActor* Owner = GetOwner();
 	AActor* Target = FocusedActor.Get();
 	if (!Owner || !Target) return;
@@ -68,19 +67,24 @@ void UInteractComponent::UpdateFocus()
 
 	if (NewFocus == OldFocus)
 	{
-		if (bDrawDebug) DrawDebugLine(GetWorld(), EyeLoc, End, bHit ? FColor::Green : FColor::Red, false, 0.f, 0, 0.1f);
+		if (bDrawDebug) 
+		{
+			if (!bHit) DrawDebugLine(GetWorld(), EyeLoc, End, FColor::Red, false, 0.f, 0, 0.1f);
+			else DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 8.f, 12, NewFocus->GetClass()->ImplementsInterface(UInteractable::StaticClass()) ? FColor::Green : FColor::Yellow, false, 0.f);
+		}
 		return;
 	}
 
 	if (OldFocus && OldFocus->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 	{
-		IInteractable::Execute_OnFocus(NewFocus, Cast<APlayerCharacter>(Owner));
+		IInteractable::Execute_OnEndFocus(OldFocus, Cast<APlayerCharacter>(Owner));
 	}
 
-	if (bDrawDebug)
+	FocusedActor = NewFocus;
+
+	if (NewFocus && NewFocus->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 	{
-		DrawDebugLine(GetWorld(), EyeLoc, End, bHit ? FColor::Yellow : FColor::Red, false, 0.f, 0, 0.1f);
-		if (bHit) DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 8.f, 12, bHit ? FColor::Yellow : FColor::Red, false, 0.f);
+		IInteractable::Execute_OnFocus(NewFocus, Cast<APlayerCharacter>(Owner));
 	}
 }
 

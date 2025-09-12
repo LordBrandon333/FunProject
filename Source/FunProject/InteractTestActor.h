@@ -25,6 +25,7 @@ protected:
 	UStaticMeshComponent* Mesh;
 
 	//IInteractable Overrides
+
 	virtual bool CanInteract_Implementation(APlayerCharacter* Interactor) override { return true; }
 	virtual void Interact_Implementation(APlayerCharacter* Interactor) override;
 	virtual void OnFocus_Implementation(APlayerCharacter* Interactor) override;

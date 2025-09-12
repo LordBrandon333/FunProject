@@ -9,7 +9,7 @@
 class APlayerCharacter;
 
 // This class does not need to be modified.
-UINTERFACE(BlueprintType)
+UINTERFACE(MinimalAPI, BlueprintType)
 class UInteractable : public UInterface
 {
 	GENERATED_BODY()

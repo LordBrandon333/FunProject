@@ -32,8 +32,6 @@ void AInteractTestActor::Tick(float DeltaTime)
 void AInteractTestActor::Interact_Implementation(APlayerCharacter* Interactor)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Interact: TestActor"));
-
-	//UKismetSystemLibrary::PrintString(this, TEXT("Interact: TestActor"), true, true, FLinearColor::Green, 1.0f);
 }
 
 void AInteractTestActor::OnFocus_Implementation(APlayerCharacter* Interactor)
