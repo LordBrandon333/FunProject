@@ -11,6 +11,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UInteractComponent;
+class UHealthComponent;
 
 
 UCLASS()
@@ -86,4 +87,11 @@ protected:
 	UInteractComponent* InteractComponent;
 
 	void HandleInteract();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UHealthComponent* HealthComponent;
+
+	// === OnDeath ===
+	UFUNCTION()
+	void OnDied(UHealthComponent* Comp, AActor* KilledActor);
 };

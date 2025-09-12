@@ -5,6 +5,8 @@
 
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerCharacter.h"
 
 // Sets default values
 AInteractTestActor::AInteractTestActor()
@@ -32,6 +34,7 @@ void AInteractTestActor::Tick(float DeltaTime)
 void AInteractTestActor::Interact_Implementation(APlayerCharacter* Interactor)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Interact: TestActor"));
+	UGameplayStatics::ApplyDamage(Interactor, 20.f, nullptr, this, nullptr);
 }
 
 void AInteractTestActor::OnFocus_Implementation(APlayerCharacter* Interactor)

@@ -12,6 +12,7 @@
 #include "InputMappingContext.h"
 #include "Kismet/GameplayStatics.h"
 #include "InteractComponent.h"
+#include "HealthComponent.h"
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
@@ -41,6 +42,7 @@ APlayerCharacter::APlayerCharacter()
 
 	//Interact Component
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -65,6 +67,11 @@ void APlayerCharacter::BeginPlay()
 
 	Stamina = MaxStamina;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	if (HealthComponent)
+	{
+		HealthComponent->OnDeath.AddDynamic(this, &APlayerCharacter::OnDied);
+	}
 }
 
 // Called every frame
@@ -176,4 +183,13 @@ void APlayerCharacter::HandleStamina(float DeltaTime)
 void APlayerCharacter::HandleInteract()
 {
 	if (InteractComponent) InteractComponent->TryInteract();
+}
+
+void APlayerCharacter::OnDied(UHealthComponent* Comp, AActor* KilledActor)
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->DisableInput(PC);
+	}
+	// TODO: Ragdoll, Respawn, UI, etc.
 }
