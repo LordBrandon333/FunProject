@@ -1,0 +1,48 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "InteractTestActor.h"
+
+#include "Components/StaticMeshComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+
+// Sets default values
+AInteractTestActor::AInteractTestActor()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	SetRootComponent(Mesh);
+	Mesh->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+	Mesh->SetRenderCustomDepth(false);
+}
+
+void AInteractTestActor::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
+
+void AInteractTestActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+void AInteractTestActor::Interact_Implementation(APlayerCharacter* Interactor)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, TEXT("Interact: TestActor"));
+
+	//UKismetSystemLibrary::PrintString(this, TEXT("Interact: TestActor"), true, true, FLinearColor::Green, 1.0f);
+}
+
+void AInteractTestActor::OnFocus_Implementation(APlayerCharacter* Interactor)
+{
+	if (Mesh) Mesh->SetRenderCustomDepth(true);
+}
+
+void AInteractTestActor::OnEndFocus_Implementation(APlayerCharacter* Interactor)
+{
+	if (Mesh) Mesh->SetRenderCustomDepth(false);
+}
+
