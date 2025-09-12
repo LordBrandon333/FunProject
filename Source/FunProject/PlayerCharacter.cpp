@@ -10,15 +10,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "InputMappingContext.h"
-#include "Kismet/GameplayStatics.h"
 #include "InteractComponent.h"
 #include "HealthComponent.h"
 #include "NeedComponent.h"
+#include "StaminaComponent.h"
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	// Capsule Init
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.f);
@@ -37,7 +37,6 @@ APlayerCharacter::APlayerCharacter()
 	MoveComp->RotationRate = FRotator(0.f, 540.f, 0.f);
 	MoveComp->JumpZVelocity = 420.f;
 	MoveComp->AirControl = 0.35f;
-	MoveComp->MaxWalkSpeed = WalkSpeed;
 	MoveComp->MaxWalkSpeedCrouched = CrouchSpeed;
 	MoveComp->NavAgentProps.bCanCrouch = true;
 
@@ -46,6 +45,7 @@ APlayerCharacter::APlayerCharacter()
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	HungerComponent = CreateDefaultSubobject<UHungerComponent>(TEXT("HungerComponent"));
 	ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
+	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -68,23 +68,16 @@ void APlayerCharacter::BeginPlay()
 		}
 	}
 
-	Stamina = MaxStamina;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-
 	if (HealthComponent)
 	{
 		HealthComponent->OnDeath.AddDynamic(this, &APlayerCharacter::OnDied);
 	}
-
-	if (HungerComponent) HungerComponent->SetDebugPrint(true);
-	if (ThirstComponent) ThirstComponent->SetDebugPrint(true);
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	HandleStamina(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -145,45 +138,17 @@ void APlayerCharacter::StopJump()
 
 void APlayerCharacter::StartSprint()
 {
-	bWantsToSprint = true;
+	if (StaminaComponent) StaminaComponent->RequestSprint(true);
 }
 
 void APlayerCharacter::StopSprint()
 {
-	bWantsToSprint = false;
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	if (StaminaComponent) StaminaComponent->RequestSprint(false);
 }
 
 void APlayerCharacter::ToggleCrouch()
 {
 	if (bIsCrouched) UnCrouch(); else Crouch();
-}
-
-void APlayerCharacter::HandleStamina(float DeltaTime)
-{
-	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
-
-	const bool bHasMoveInput = MoveComp->GetCurrentAcceleration().SizeSquared() > KINDA_SMALL_NUMBER;
-	const bool bCanReallySprint = bWantsToSprint && (Stamina > 1.f) && !bIsCrouched && MoveComp->IsMovingOnGround() && bHasMoveInput;
-	if (bCanReallySprint)
-	{
-		MoveComp->MaxWalkSpeed = SprintSpeed;
-		Stamina = FMath::Clamp(Stamina - StaminaDrainPerSecond * DeltaTime, 0.f, MaxStamina);
-		if (Stamina <= 0.f)
-		{
-			bWantsToSprint = false;
-			MoveComp->MaxWalkSpeed = WalkSpeed;
-		}
-	}
-	else
-	{
-		MoveComp->MaxWalkSpeed = WalkSpeed;
-
-		if (!MoveComp->IsFalling())
-		{
-			Stamina = FMath::Clamp(Stamina + StaminaRegenPerSecond * DeltaTime, 0.f, MaxStamina);
-		}
-	}
 }
 
 void APlayerCharacter::HandleInteract()

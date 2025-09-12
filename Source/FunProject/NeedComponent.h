@@ -36,7 +36,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Need | Debug") void SetDebugPrint(bool bEnable) { bDebugPrint = bEnable; }
 
-	// === Delegated ===
+	// === Delegates ===
 	UPROPERTY(BlueprintAssignable, Category = "Need | Events") FOnNeedChanged OnNeedChanged;
 	UPROPERTY(BlueprintAssignable, Category = "Need | Events") FOnNeedCritical OnCritical;
 	UPROPERTY(BlueprintAssignable, Category = "Need | Events") FOnNeedRecovered OnRecovered;

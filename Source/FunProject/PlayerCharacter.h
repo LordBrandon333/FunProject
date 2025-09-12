@@ -14,6 +14,7 @@ class UInteractComponent;
 class UHealthComponent;
 class UHungerComponent;
 class UThirstComponent;
+class UStaminaComponent;
 
 
 UCLASS()
@@ -61,29 +62,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float CrouchSpeed = 200.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
-	float WalkSpeed = 400.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
-	float SprintSpeed = 650.f;
-
-	// === Character Stats ===
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	float MaxStamina = 100.f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	float Stamina = MaxStamina;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	float StaminaDrainPerSecond = 10.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Stats")
-	float StaminaRegenPerSecond = 5.f;
-
-	bool bWantsToSprint = false;
-
-	void HandleStamina(float DeltaTime);
-
 	// === Components ===
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UInteractComponent* InteractComponent;
@@ -98,6 +76,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UThirstComponent* ThirstComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStaminaComponent* StaminaComponent;
 
 	// === OnDeath ===
 	UFUNCTION()
