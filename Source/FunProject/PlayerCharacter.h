@@ -15,6 +15,7 @@ class UHealthComponent;
 class UHungerComponent;
 class UThirstComponent;
 class UStaminaComponent;
+class UStatusEffectsComponent;
 
 
 UCLASS()
@@ -79,6 +80,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaminaComponent* StaminaComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UStatusEffectsComponent* StatusEffects;
 
 	// === OnDeath ===
 	UFUNCTION()

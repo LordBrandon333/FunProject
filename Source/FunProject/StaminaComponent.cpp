@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "NeedComponent.h" 
+#include "StatusEffectsComponent.h"
 
 // Sets default values for this component's properties
 UStaminaComponent::UStaminaComponent()
@@ -33,6 +34,7 @@ void UStaminaComponent::BeginPlay()
         {
             Hunger = OwnerChar->FindComponentByClass<UHungerComponent>();
             Thirst = OwnerChar->FindComponentByClass<UThirstComponent>();
+            Effects = OwnerChar->FindComponentByClass<UStatusEffectsComponent>();
         }
     }
 
@@ -85,6 +87,13 @@ void UStaminaComponent::UpdateStamina(float DeltaTime)
         {
             if (Hunger.IsValid() && Hunger->IsCritical())  Regen *= RegenMult_HungerCritical;
             if (Thirst.IsValid() && Thirst->IsCritical())  Regen *= RegenMult_ThirstCritical;
+        }
+
+        if (Effects.IsValid())
+        {
+            float Add = 0.f, Mul = 1.f;
+            Effects->GetAggregateForStat(TEXT("Stamina.Regen"), Add, Mul);
+            Regen = (Regen + Add) * Mul;
         }
 
         Stamina = FMath::Clamp(Stamina + Regen * DeltaTime, 0.f, MaxStamina);

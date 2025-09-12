@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interactable.h"
+#include "StatusEffectData.h"
 #include "InteractTestActor.generated.h"
 
 class UStaticMeshComponent;
@@ -30,4 +31,10 @@ protected:
 	virtual void Interact_Implementation(APlayerCharacter* Interactor) override;
 	virtual void OnFocus_Implementation(APlayerCharacter* Interactor) override;
 	virtual void OnEndFocus_Implementation(APlayerCharacter* Interactor) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Test")
+	UStatusEffectData* EffectToApply = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Test")
+	FName EffectSourceId = TEXT("Example");
 };

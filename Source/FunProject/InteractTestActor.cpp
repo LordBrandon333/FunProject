@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "PlayerCharacter.h"
 #include "NeedComponent.h"
+#include "StatusEffectsComponent.h"
 
 // Sets default values
 AInteractTestActor::AInteractTestActor()
@@ -23,13 +24,11 @@ AInteractTestActor::AInteractTestActor()
 void AInteractTestActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void AInteractTestActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AInteractTestActor::Interact_Implementation(APlayerCharacter* Interactor)
@@ -44,6 +43,11 @@ void AInteractTestActor::Interact_Implementation(APlayerCharacter* Interactor)
 	if (UThirstComponent* Thirst = Interactor->FindComponentByClass<UThirstComponent>())
 	{
 		Thirst->Add(25.f);
+	}
+
+	if (UStatusEffectsComponent* Effects = Interactor->FindComponentByClass<UStatusEffectsComponent>())
+	{
+		Effects->ApplyEffect(EffectToApply, EffectSourceId);
 	}
 }
 

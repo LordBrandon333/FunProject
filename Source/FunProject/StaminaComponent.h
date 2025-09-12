@@ -10,6 +10,7 @@ class ACharacter;
 class UCharacterMovementComponent;
 class UHungerComponent;
 class UThirstComponent;
+class UStatusEffectsComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnStaminaChanged, class UStaminaComponent*, StaminaComp, float, OldValue, float, NewValue, float, Delta);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExhausted, class UStaminaComponent*, StaminaComp);
@@ -95,6 +96,7 @@ private:
 	TWeakObjectPtr<UCharacterMovementComponent> MoveComp;
 	TWeakObjectPtr<UHungerComponent> Hunger;
 	TWeakObjectPtr<UThirstComponent> Thirst;
+	TWeakObjectPtr<UStatusEffectsComponent> Effects;
 
 	bool bWantsSprint = false;
 	bool bIsSprinting = false;

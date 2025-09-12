@@ -14,6 +14,7 @@
 #include "HealthComponent.h"
 #include "NeedComponent.h"
 #include "StaminaComponent.h"
+#include "StatusEffectsComponent.h"
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
@@ -40,12 +41,13 @@ APlayerCharacter::APlayerCharacter()
 	MoveComp->MaxWalkSpeedCrouched = CrouchSpeed;
 	MoveComp->NavAgentProps.bCanCrouch = true;
 
-	//Interact Component
+	//Components
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	HungerComponent = CreateDefaultSubobject<UHungerComponent>(TEXT("HungerComponent"));
 	ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
 	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
+	StatusEffects = CreateDefaultSubobject<UStatusEffectsComponent>(TEXT("StatusEffects"));
 }
 
 // Called when the game starts or when spawned
