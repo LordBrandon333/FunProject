@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "InteractComponent.h"
 #include "HealthComponent.h"
+#include "NeedComponent.h"
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
@@ -43,6 +44,8 @@ APlayerCharacter::APlayerCharacter()
 	//Interact Component
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("InteractComponent"));
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	HungerComponent = CreateDefaultSubobject<UHungerComponent>(TEXT("HungerComponent"));
+	ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -72,6 +75,9 @@ void APlayerCharacter::BeginPlay()
 	{
 		HealthComponent->OnDeath.AddDynamic(this, &APlayerCharacter::OnDied);
 	}
+
+	if (HungerComponent) HungerComponent->SetDebugPrint(true);
+	if (ThirstComponent) ThirstComponent->SetDebugPrint(true);
 }
 
 // Called every frame

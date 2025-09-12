@@ -12,6 +12,8 @@ class UInputMappingContext;
 class UInputAction;
 class UInteractComponent;
 class UHealthComponent;
+class UHungerComponent;
+class UThirstComponent;
 
 
 UCLASS()
@@ -90,6 +92,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UHealthComponent* HealthComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UHungerComponent* HungerComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UThirstComponent* ThirstComponent;
 
 	// === OnDeath ===
 	UFUNCTION()
