@@ -82,7 +82,7 @@ protected:
 	UStaminaComponent* StaminaComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStatusEffectsComponent* StatusEffects;
+	UStatusEffectsComponent* StatusEffectsComponent;
 
 	// === OnDeath ===
 	UFUNCTION()

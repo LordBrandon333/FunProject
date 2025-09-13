@@ -1,21 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "StaminaComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "NeedComponent.h" 
-#include "StatusEffectsComponent.h"
+#include "NeedComponent.h"                
+#include "StatusEffectsComponent.h"      
 
-// Sets default values for this component's properties
 UStaminaComponent::UStaminaComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-}
-
-void UStaminaComponent::RequestSprint(bool bEnable)
-{
-    bWantsSprint = bEnable;
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UStaminaComponent::BeginPlay()
@@ -30,12 +21,20 @@ void UStaminaComponent::BeginPlay()
         {
             ApplyWalkSpeed(WalkSpeed);
         }
+
         if (bUseNeeds)
         {
             Hunger = OwnerChar->FindComponentByClass<UHungerComponent>();
             Thirst = OwnerChar->FindComponentByClass<UThirstComponent>();
-            Effects = OwnerChar->FindComponentByClass<UStatusEffectsComponent>();
         }
+
+        Effects = OwnerChar->FindComponentByClass<UStatusEffectsComponent>();
+    }
+
+    if (!StaminaRegenTag.IsValid())
+    {
+        const FName TagName(TEXT("Stat.Stamina.Regen"));
+        StaminaRegenTag = FGameplayTag::RequestGameplayTag(TagName, false);
     }
 
     Stamina = FMath::Clamp(MaxStamina, 1.f, MaxStamina);
@@ -43,8 +42,37 @@ void UStaminaComponent::BeginPlay()
 
 void UStaminaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     UpdateStamina(DeltaTime);
+}
+
+void UStaminaComponent::RequestSprint(bool bEnable)
+{
+    bWantsSprint = bEnable;
+}
+
+bool UStaminaComponent::HasMoveInput() const
+{
+    if (!MoveComp.IsValid()) return false;
+    return MoveComp->GetCurrentAcceleration().SizeSquared() > KINDA_SMALL_NUMBER;
+}
+
+bool UStaminaComponent::CanSprint() const
+{
+    if (!OwnerChar.IsValid() || !MoveComp.IsValid()) return false;
+    if (bBlockSprintWhenCrouched && OwnerChar->bIsCrouched) return false;
+    if (bBlockSprintInAir && !MoveComp->IsMovingOnGround()) return false;
+    if (bRequireMoveInputToSprint && !HasMoveInput()) return false;
+    if (Stamina < MinStaminaToStartSprint) return false;
+    return true;
+}
+
+void UStaminaComponent::ApplyWalkSpeed(float NewSpeed) const
+{
+    if (MoveComp.IsValid())
+    {
+        MoveComp->MaxWalkSpeed = NewSpeed;
+    }
 }
 
 void UStaminaComponent::UpdateStamina(float DeltaTime)
@@ -85,14 +113,14 @@ void UStaminaComponent::UpdateStamina(float DeltaTime)
 
         if (bUseNeeds)
         {
-            if (Hunger.IsValid() && Hunger->IsCritical())  Regen *= RegenMult_HungerCritical;
-            if (Thirst.IsValid() && Thirst->IsCritical())  Regen *= RegenMult_ThirstCritical;
+            if (Hunger.IsValid() && Hunger->IsCritical()) Regen *= RegenMult_HungerCritical;
+            if (Thirst.IsValid() && Thirst->IsCritical()) Regen *= RegenMult_ThirstCritical;
         }
 
-        if (Effects.IsValid())
+        if (Effects.IsValid() && StaminaRegenTag.IsValid())
         {
             float Add = 0.f, Mul = 1.f;
-            Effects->GetAggregateForStat(TEXT("Stamina.Regen"), Add, Mul);
+            Effects->GetAggregateForStat(StaminaRegenTag, Add, Mul);
             Regen = (Regen + Add) * Mul;
         }
 
@@ -110,30 +138,3 @@ void UStaminaComponent::UpdateStamina(float DeltaTime)
         OnStaminaChanged.Broadcast(this, Old, Stamina, Stamina - Old);
     }
 }
-
-bool UStaminaComponent::CanSprint() const
-{
-    if (!OwnerChar.IsValid() || !MoveComp.IsValid()) return false;
-
-    if (bBlockSprintWhenCrouched && OwnerChar->bIsCrouched) return false;
-    if (bBlockSprintInAir && !MoveComp->IsMovingOnGround()) return false;
-    if (bRequireMoveInputToSprint && !HasMoveInput()) return false;
-    if (Stamina < MinStaminaToStartSprint) return false;
-
-    return true;
-}
-
-bool UStaminaComponent::HasMoveInput() const
-{
-    if (!MoveComp.IsValid()) return false;
-    return MoveComp->GetCurrentAcceleration().SizeSquared() > KINDA_SMALL_NUMBER;
-}
-
-void UStaminaComponent::ApplyWalkSpeed(float NewSpeed) const
-{
-    if (MoveComp.IsValid())
-    {
-        MoveComp->MaxWalkSpeed = NewSpeed;
-    }
-}
-

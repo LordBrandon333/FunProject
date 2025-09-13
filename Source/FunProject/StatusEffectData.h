@@ -1,63 +1,64 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
+#include "StatRegistry.h" 
 #include "StatusEffectData.generated.h"
 
-UENUM(BlueprintType)
-enum class EStatOp : uint8
-{
-	Add UMETA(DisplayName = "Add"),
-	Mul UMETA(DisplayName = "Multiply"),
-};
-
 USTRUCT(BlueprintType)
-struct FStatModifier
+struct FStatModifierRef
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Modifier")
-	FName StatTag = NAME_None;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Stat"))
+    FGameplayTag StatTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Modifier")
-	EStatOp Op = EStatOp::Add;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bOverrideOp = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Modifier")
-	float Value = 0.f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bOverrideOp"))
+    EStatOp Op = EStatOp::Add;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bOverrideValue = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "bOverrideValue"))
+    float Value = 0.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bScaleByStacks = true;
 };
 
 UENUM(BlueprintType)
 enum class EEffectStackingPolicy : uint8
 {
-	Additive UMETA(DisplayName = "Additive"),
-	RefreshDuration UMETA(DisplayName = "Refresh Duration"),
-	Exclusive UMETA(DisplayName = "Exclusive"),
+    Additive         UMETA(DisplayName = "Additive"),       
+    RefreshDuration  UMETA(DisplayName = "Refresh Duration"),
+    Exclusive        UMETA(DisplayName = "Exclusive"),       
 };
 
-
-UCLASS()
+UCLASS(BlueprintType)
 class FUNPROJECT_API UStatusEffectData : public UDataAsset
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
-	FName EffectTag = NAME_None;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
-	FText DisplayName;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "Effect"))
+    FGameplayTag EffectTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect", meta = (ClampMin = "0.1"))
-	float Duration = 10.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    FText DisplayName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect", meta = (ClampMin = "1"))
-	int32 MaxStacks = 1;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = "0.1"))
+    float Duration = 10.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
-	EEffectStackingPolicy Stacking = EEffectStackingPolicy::RefreshDuration;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = "1"))
+    int32 MaxStacks = 1;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
-	TArray<FStatModifier> Modifiers;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    EEffectStackingPolicy Stacking = EEffectStackingPolicy::RefreshDuration;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TArray<FStatModifierRef> Modifiers;
 };

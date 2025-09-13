@@ -47,7 +47,7 @@ APlayerCharacter::APlayerCharacter()
 	HungerComponent = CreateDefaultSubobject<UHungerComponent>(TEXT("HungerComponent"));
 	ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
 	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
-	StatusEffects = CreateDefaultSubobject<UStatusEffectsComponent>(TEXT("StatusEffects"));
+	StatusEffectsComponent = CreateDefaultSubobject<UStatusEffectsComponent>(TEXT("StatusEffectsComponent"));
 }
 
 // Called when the game starts or when spawned
