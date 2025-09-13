@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayTagContainer.h"
 #include "NeedComponent.generated.h"
+
+class UStatusEffectsComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnNeedChanged, class UNeedComponent*, NeedComp, float, OldValue, float, NewValue, float, Delta);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNeedCritical, class UNeedComponent*, NeedComp);
@@ -50,6 +53,9 @@ protected:
 	void NeedTick();
 	void HandleThresholds(float OldValue, float NewValue);
 
+	float GetEffectiveDecayPerSecond() const;
+	float GetEffectiveRegenPerSecond() const;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Need") 
 	FName StatTag = NAME_None;
@@ -75,10 +81,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Need | Debug")
 	bool bDebugPrint = false;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Need | Tags", meta = (Categories = "Stat"))
+	FGameplayTag DecayTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Need | Tags", meta = (Categories = "Stat"))
+	FGameplayTag RegenTag;
+
 private:
 	bool bPaused = false;
 	bool bIsInCritical = false;
 	FTimerHandle TickHandle;
+	TWeakObjectPtr<UStatusEffectsComponent> Effects;
 };
 
 // == Hunger and Thirst Components (Only Defaults) ===

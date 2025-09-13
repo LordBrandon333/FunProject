@@ -5,6 +5,7 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "StatusEffectsComponent.h"
 
 // Sets default values for this component's properties
 UNeedComponent::UNeedComponent()
@@ -17,6 +18,11 @@ UNeedComponent::UNeedComponent()
 void UNeedComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (AActor* Owner = GetOwner())
+	{
+		Effects = Owner->FindComponentByClass<UStatusEffectsComponent>();
+	}
 
 	Current = FMath::Clamp(Current, 0.f, Max);
 	bIsInCritical = (Current <= CriticalThreshold);
@@ -47,17 +53,20 @@ void UNeedComponent::NeedTick()
 	if (bPaused) return;
 
 	const float Old = Current;
-
+	
 	float Delta = 0.f;
-	if (DecayPerSecond > 0.f)
+	const float EffDecay = GetEffectiveDecayPerSecond();
+	const float EffRegen = GetEffectiveRegenPerSecond();
+	
+	if (EffDecay > 0.f)
 	{
-		Delta -= DecayPerSecond * TickInterval;
+		Delta -= EffDecay * TickInterval;
 	}
-	if (RegenPerSecond > 0.f && Current < Max)
+	if (EffRegen > 0.f && Current < Max)
 	{
-		Delta += RegenPerSecond * TickInterval;
+		Delta += EffRegen * TickInterval;
 	}
-
+	
 	if (!FMath::IsNearlyZero(Delta))
 	{
 		Current = FMath::Clamp(Old + Delta, 0.f, Max);
@@ -88,6 +97,30 @@ void UNeedComponent::HandleThresholds(float OldValue, float NewValue)
 		bIsInCritical = false;
 		OnRecovered.Broadcast(this);
 	}
+}
+
+float UNeedComponent::GetEffectiveDecayPerSecond() const
+{
+	float Rate = DecayPerSecond;
+	if (Effects.IsValid() && DecayTag.IsValid())
+	{
+		float Add = 0.f, Mul = 1.f;
+		Effects->GetAggregateForStat(DecayTag, Add, Mul);
+		Rate = (Rate + Add) * Mul;
+	}
+	return FMath::Max(0.f, Rate);
+}
+
+float UNeedComponent::GetEffectiveRegenPerSecond() const
+{
+	float Rate = RegenPerSecond;
+	if (Effects.IsValid() && RegenTag.IsValid())
+	{
+		float Add = 0.f, Mul = 1.f;
+		Effects->GetAggregateForStat(DecayTag, Add, Mul);
+		Rate = (Rate + Add) * Mul;
+	}
+	return FMath::Max(0.f, Rate);
 }
 
 void UNeedComponent::Add(float Amount)
@@ -148,6 +181,8 @@ UHungerComponent::UHungerComponent()
 	DecayPerSecond = 0.02f;
 	RegenPerSecond = 0.f;
 	CriticalThreshold = 15.f;
+	DecayTag = FGameplayTag::RequestGameplayTag(TEXT("Stat.Hunger.Decay"), false);
+	RegenTag = FGameplayTag::RequestGameplayTag(TEXT("Stat.Hunger.Regen"), false);
 }
 
 UThirstComponent::UThirstComponent()
@@ -159,5 +194,7 @@ UThirstComponent::UThirstComponent()
 	DecayPerSecond = 0.035f;
 	RegenPerSecond = 0.f;
 	CriticalThreshold = 20.f;
+	DecayTag = FGameplayTag::RequestGameplayTag(TEXT("Stat.Thirst.Decay"), false);
+	RegenTag = FGameplayTag::RequestGameplayTag(TEXT("Stat.Thirst.Regen"), false);
 }
 
