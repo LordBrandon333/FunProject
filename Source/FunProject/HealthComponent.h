@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameplayTagContainer.h"
 #include "HealthComponent.generated.h"
 
 class UDamageType;
+class UStatusEffectsComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnHealthChanged, UHealthComponent*, HealthComp, float, OldValue, float, NewValue, float, Delta, AActor*, InstigatorActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDeath, UHealthComponent*, HealthComp, AActor*, KilledActor);
@@ -45,6 +47,12 @@ protected:
 	void StopRegen();
 	void RegenTick();
 
+	float GetEffectiveHealthRegenRate() const;
+	void RefreshRegenTimer();
+
+	UFUNCTION()
+	void OnEffectsChanged();
+
 	void BroadcastHealthChanged(float Old, float New, float Delta, AActor* InstigatorActor);
 
 	// === Damage Hooks ===
@@ -70,10 +78,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health | Regen", meta = (EditCondition = "bAutoRegenEnabled", ClampMin = "0.01", ClampMax = "0.5"))
 	float RegenTickInterval = 0.1f;
 
+	UPROPERTY(VisibleInstanceOnly, Category = "Health | Regen")
+	double NextAllowedPositiveRegenTime = 0.0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health | Tuning", meta = (ClampMin = "0.0"))
 	float DamageMultiplier = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health | Tags", meta = (Categories = "Stat"))
+	FGameplayTag DamageReceivedTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health | Tags", meta = (Categories = "Stat"))
+	FGameplayTag HealthRegenTag;
 
 private:
 	FTimerHandle RegenDelayHandle;
 	FTimerHandle RegenTickHandle;
+	TWeakObjectPtr<UStatusEffectsComponent> Effects;
 };
