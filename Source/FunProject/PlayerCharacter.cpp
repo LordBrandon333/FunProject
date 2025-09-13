@@ -15,6 +15,8 @@
 #include "NeedComponent.h"
 #include "StaminaComponent.h"
 #include "StatusEffectsComponent.h"
+#include "HUDWidget.h"
+#include "Blueprint/UserWidget.h"
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
@@ -66,6 +68,16 @@ void APlayerCharacter::BeginPlay()
 				{
 					Subsys->AddMappingContext(DefaultMappingContext, 0);
 				}
+			}
+		}
+
+		if (HUDWidgetClass)
+		{
+			HUDWidget = CreateWidget<UHUDWidget>(PC, HUDWidgetClass);
+			if (HUDWidget)
+			{
+				HUDWidget->AddToViewport();
+				HUDWidget->InitializeFromCharacter(this);
 			}
 		}
 	}

@@ -16,6 +16,7 @@ class UHungerComponent;
 class UThirstComponent;
 class UStaminaComponent;
 class UStatusEffectsComponent;
+class UHUDWidget;
 
 
 UCLASS()
@@ -87,4 +88,11 @@ protected:
 	// === OnDeath ===
 	UFUNCTION()
 	void OnDied(UHealthComponent* Comp, AActor* KilledActor);
+
+	// === UI ===
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UHUDWidget> HUDWidgetClass;
+
+	UPROPERTY()
+	UHUDWidget* HUDWidget = nullptr;
 };
