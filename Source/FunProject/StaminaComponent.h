@@ -92,7 +92,7 @@ protected:
     float RegenMult_ThirstCritical = 0.35f;
 
     // Tag for Stamina-Regeneration
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stamina|Tags", meta = (Categories = "Stat"))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stamina | Tags", meta = (Categories = "Stat"))
     FGameplayTag StaminaRegenTag;
 
 private:
