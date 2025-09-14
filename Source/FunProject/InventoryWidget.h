@@ -72,4 +72,5 @@ private:
     void CursorClear();
     void CursorPickup(UItemData* Item, int32 Count);
     void CursorPlaceIntoSlot(int32 SlotIndex, bool bSingleUnit);
+    int32 FindPartialStackInRange(UItemData* Item, int32 ExcludeIndex, int32 Start, int32 Count) const;
 };

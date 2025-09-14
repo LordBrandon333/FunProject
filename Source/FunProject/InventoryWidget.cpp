@@ -1,4 +1,4 @@
-#include "InventoryWidget.h"
+﻿#include "InventoryWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Components/CanvasPanel.h"
@@ -112,36 +112,48 @@ void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift
     const bool bLeft = (Button == EKeys::LeftMouseButton);
     const bool bRight = (Button == EKeys::RightMouseButton);
 
-    // SHIFT + LMB: Quick-Merge in anderen Stack (nur wenn Cursor leer)
+    // SHIFT + LMB: Ganzen Stack vom Bereich A -> Bereich B verschieben.
+    // In Zielbereich erst Teilstacks füllen, dann Rest in freie Slots – kein Auffüllen im Quellbereich.
     if (bLeft && bShift && CursorCount == 0)
     {
         UItemData* Item = Slots[SlotIndex].Item;
-        if (Item && Slots[SlotIndex].Count > 0)
+        if (!Item || Slots[SlotIndex].Count <= 0)
+            return;
+
+        const int32 FirstInv = Inventory->GetFirstInventoryIndex(); // == HotbarSize
+        const int32 Capacity = Inventory->GetCapacity();
+        const int32 HotbarSz = Inventory->GetHotbarSize();
+
+        const bool  bFromInventory = (SlotIndex >= FirstInv);
+        const int32 TargetStart = bFromInventory ? 0 : FirstInv;                 // Zielbereich: Hotbar bzw. Inventar
+        const int32 TargetCount = bFromInventory ? HotbarSz : (Capacity - FirstInv);
+
+        // So lange verschieben, bis Quellslot leer ist oder Zielbereich nichts mehr aufnehmen kann
+        int safety = 0;
+        while (safety++ < Capacity)
         {
-            const int32 Other = Inventory->FindOtherStackWithSpace(Item, SlotIndex);
-            if (Other != INDEX_NONE)
+            const TArray<FInventorySlot>& Cur = Inventory->GetSlots();
+            if (Cur[SlotIndex].IsEmpty())
+                break; // Quelle ist leer -> fertig
+
+            // 1) Teilgefüllten Stack im Zielbereich suchen (ExcludeIndex egal, denn Zielbereich != Quelle)
+            int32 dest = FindPartialStackInRange(Item, INDEX_NONE, TargetStart, TargetCount);
+            if (dest != INDEX_NONE)
             {
-                Inventory->MoveMaxPossible(SlotIndex, Other);
+                Inventory->MoveMaxPossible(SlotIndex, dest);
+                continue;
             }
-            else
+
+            // 2) Freien Slot im Zielbereich suchen
+            const int32 emptyDest = Inventory->FindEmptyIndexInRange(TargetStart, TargetCount);
+            if (emptyDest != INDEX_NONE)
             {
-                // << NEU: kein f�llbarer Stack -> in andere Region verschieben >>
-                const int32 FirstInv = Inventory->GetFirstInventoryIndex();   // == HotbarSize
-                const int32 Capacity = Inventory->GetCapacity();
-                const int32 HotbarSz = Inventory->GetHotbarSize();
-
-                const bool bClickedInInventory = (SlotIndex >= FirstInv);
-
-                const int32 TargetStart = bClickedInInventory ? 0 : FirstInv;
-                const int32 TargetCount = bClickedInInventory ? HotbarSz : (Capacity - FirstInv);
-
-                const int32 EmptyDest = Inventory->FindEmptyIndexInRange(TargetStart, TargetCount);
-                if (EmptyDest != INDEX_NONE)
-                {
-                    Inventory->MoveMaxPossible(SlotIndex, EmptyDest); // verschiebt soviel wie m�glich
-                }
-                // Optional: else -> Feedback anzeigen (kein freier Slot in Zielbereich)
+                Inventory->MoveMaxPossible(SlotIndex, emptyDest);
+                continue;
             }
+
+            // 3) Zielbereich ist voll -> mehr geht nicht
+            break;
         }
         return;
     }
@@ -180,12 +192,12 @@ void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift
     {
         if (bRight)
         {
-            // RMB mit Cursor -> EIN St�ck platzieren
+            // RMB mit Cursor -> EIN Stück platzieren
             CursorPlaceIntoSlot(SlotIndex, /*bSingleUnit=*/true);
         }
         else if (bLeft)
         {
-            // LMB mit Cursor -> so viel wie m�glich platzieren (merge/fill/swap)
+            // LMB mit Cursor -> so viel wie möglich platzieren (merge/fill/swap)
             CursorPlaceIntoSlot(SlotIndex, /*bSingleUnit=*/false);
         }
     }
@@ -298,4 +310,23 @@ void UInventoryWidget::CursorPlaceIntoSlot(int32 SlotIndex, bool bSingleUnit)
     {
         CursorVisual->SetStack(CursorItem, CursorCount);
     }
+}
+
+int32 UInventoryWidget::FindPartialStackInRange(UItemData* Item, int32 ExcludeIndex, int32 Start, int32 Count) const
+{
+    if (!Inventory || !Item) return INDEX_NONE;
+    const TArray<FInventorySlot>& SlotsRef = Inventory->GetSlots();
+    const int32 S = FMath::Clamp(Start, 0, SlotsRef.Num());
+    const int32 E = FMath::Clamp(Start + Count, 0, SlotsRef.Num());
+
+    for (int32 i = S; i < E; ++i)
+    {
+        if (i == ExcludeIndex) continue;
+        const FInventorySlot& Slt = SlotsRef[i];
+        if (Slt.Item == Item && Slt.Count > 0 && Slt.Count < Item->MaxStackSize)
+        {
+            return i; // erster teilgefüllter Stack
+        }
+    }
+    return INDEX_NONE;
 }
