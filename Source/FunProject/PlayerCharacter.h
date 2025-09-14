@@ -16,6 +16,7 @@ class UHungerComponent;
 class UThirstComponent;
 class UStaminaComponent;
 class UStatusEffectsComponent;
+class UInventoryComponent;
 class UHUDWidget;
 
 
@@ -84,6 +85,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStatusEffectsComponent* StatusEffectsComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInventoryComponent* InventoryComponent;
 
 	// === OnDeath ===
 	UFUNCTION()

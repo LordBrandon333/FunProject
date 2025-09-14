@@ -17,6 +17,7 @@
 #include "StatusEffectsComponent.h"
 #include "HUDWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "InventoryComponent.h"
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
@@ -50,6 +51,7 @@ APlayerCharacter::APlayerCharacter()
 	ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
 	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
 	StatusEffectsComponent = CreateDefaultSubobject<UStatusEffectsComponent>(TEXT("StatusEffectsComponent"));
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
 
 // Called when the game starts or when spawned
