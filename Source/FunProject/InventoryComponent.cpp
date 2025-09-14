@@ -1,6 +1,7 @@
-#include "InventoryComponent.h"
+﻿#include "InventoryComponent.h"
 #include "ItemData.h"
 #include "ItemAction.h"
+
 
 int32 FInventorySlot::FreeSpace() const
 {
@@ -13,25 +14,31 @@ UInventoryComponent::UInventoryComponent()
     PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UInventoryComponent::BeginPlay()
-{
-    Super::BeginPlay();
-    Slots.SetNum(Capacity);
-}
-
 void UInventoryComponent::InitializeComponent()
 {
     Super::InitializeComponent();
+
     Slots.SetNum(Capacity);
 
-    HotbarSize = FMath::Min(HotbarSize, Capacity);
     if (HotbarSize > Capacity)
     {
         UE_LOG(LogTemp, Warning, TEXT("InventoryComponent: HotbarSize (%d) > Capacity (%d). Clamping."),
             HotbarSize, Capacity);
         HotbarSize = Capacity;
     }
+
+    SelectedHotbarIndex = FMath::Clamp(SelectedHotbarIndex, 0, FMath::Max(HotbarSize - 1, 0));
+
+    RefreshSizing();
     OnInventoryChanged.Broadcast();
+    OnHotbarIndexChanged.Broadcast(SelectedHotbarIndex);
+}
+
+void UInventoryComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    OnInventoryChanged.Broadcast();
+    OnHotbarIndexChanged.Broadcast(SelectedHotbarIndex);
 }
 
 int32 UInventoryComponent::FindFirstStackableIndex(UItemData* Item) const
@@ -61,7 +68,7 @@ int32 UInventoryComponent::TryAddItem(UItemData* Item, int32 Count)
 
     int32 ToAdd = Count;
 
-    // 1) In bestehende Stacks f�llen
+    // 1) In bestehende Stacks füllen
     while (ToAdd > 0)
     {
         const int32 StackIdx = FindFirstStackableIndex(Item);
@@ -133,9 +140,13 @@ bool UInventoryComponent::UseSlot(int32 SlotIndex)
     FInventorySlot& S = Slots[SlotIndex];
     if (S.IsEmpty() || !S.Item) return false;
 
-    // Execute Actions (kein harter Check auf EItemType)
-    const bool bDid = ApplyUseEffects(S.Item);
-    if (!bDid) return false;
+    // Aktionen ausführen (ItemData → ActionsOnUse)
+    bool bAny = false;
+    for (UItemAction* Action : S.Item->ActionsOnUse)
+    {
+        if (Action && Action->Execute(GetOwner())) bAny = true;
+    }
+    if (!bAny) return false;
 
     if (S.Item->bConsumeOnUse)
     {
@@ -147,21 +158,58 @@ bool UInventoryComponent::UseSlot(int32 SlotIndex)
     return true;
 }
 
-bool UInventoryComponent::ApplyUseEffects(UItemData* Item)
+bool UInventoryComponent::SetSelectedHotbarIndex(int32 NewIndex)
 {
-    if (!Item) return false;
-    AActor* Owner = GetOwner();
-    if (!Owner) return false;
+    if (HotbarSize <= 0) return false;
+    NewIndex = FMath::Clamp(NewIndex, 0, HotbarSize - 1);
+    if (NewIndex == SelectedHotbarIndex) return false;
+    SelectedHotbarIndex = NewIndex;
+    OnHotbarIndexChanged.Broadcast(SelectedHotbarIndex);
+    return true;
+}
 
-    bool bAny = false;
-    for (UItemAction* Action : Item->ActionsOnUse)
+void UInventoryComponent::OffsetSelectedHotbarIndex(int32 Delta)
+{
+    if (HotbarSize <= 0) return;
+    const int32 H = HotbarSize;
+    int32 NewIndex = (SelectedHotbarIndex + Delta) % H;
+    if (NewIndex < 0) NewIndex += H;
+    if (NewIndex != SelectedHotbarIndex)
     {
-        if (Action && Action->Execute(Owner)) bAny = true;
+        SelectedHotbarIndex = NewIndex;
+        OnHotbarIndexChanged.Broadcast(SelectedHotbarIndex);
     }
-    return bAny;
+}
+
+bool UInventoryComponent::UseSelectedHotbarItem()
+{
+    if (HotbarSize <= 0) return false;
+    return UseSlot(SelectedHotbarIndex);
 }
 
 void UInventoryComponent::BroadcastChanged()
 {
     OnInventoryChanged.Broadcast();
+}
+
+void UInventoryComponent::RefreshSizing()
+{
+    // Capacity clampen
+    if (Capacity < 0) Capacity = 0;
+
+    // Slots auf Capacity bringen
+    if (Slots.Num() != Capacity)
+        Slots.SetNum(Capacity);
+
+    // Hotbar clampen
+    if (HotbarSize > Capacity)
+        HotbarSize = Capacity;
+
+    SelectedHotbarIndex = FMath::Clamp(SelectedHotbarIndex, 0, FMath::Max(HotbarSize - 1, 0));
+}
+
+void UInventoryComponent::OnRegister()
+{
+    Super::OnRegister();
+    RefreshSizing();
 }

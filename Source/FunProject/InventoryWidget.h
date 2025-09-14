@@ -20,7 +20,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory|UI")
     void SetVisible(bool bShow);
 
-    UFUNCTION(BlueprintCallable, Category = "Inventory | UI")
+    UFUNCTION(BlueprintCallable, Category = "Inventory|UI")
     void SetRange(int32 InStartIndex, int32 InCount);
 
 protected:
@@ -29,16 +29,17 @@ protected:
 
     UPROPERTY(meta = (BindWidget)) UUniformGridPanel* ItemsGrid = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory | UI")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|UI")
     TSubclassOf<UInventorySlotWidget> SlotWidgetClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory | UI", meta = (ClampMin = "1"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|UI", meta = (ClampMin = "1"))
     int32 Columns = 6;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory | UI", meta = (ClampMin = "0"))
+    // Sichtbarer Bereich im Inventar (exkl. Hotbar)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|UI", meta = (ClampMin = "0"))
     int32 StartIndex = 4;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory | UI", meta = (ClampMin = "0"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|UI", meta = (ClampMin = "0"))
     int32 VisibleCount = 24;
 
 private:

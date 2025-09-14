@@ -7,6 +7,7 @@
 class UButton;
 class UImage;
 class UTextBlock;
+class UBorder;
 class UItemData;
 class UInventoryComponent;
 
@@ -18,11 +19,17 @@ class FUNPROJECT_API UInventorySlotWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintCallable, Category = "Inventory | UI")
+    UFUNCTION(BlueprintCallable, Category = "Inventory|UI")
     void Setup(UInventoryComponent* InInventory, int32 InSlotIndex, UItemData* InItem, int32 InCount);
 
-    UPROPERTY(BlueprintAssignable, Category = "Inventory | UI")
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|UI")
     FOnSlotClicked OnSlotClicked;
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory|UI")
+    void SetSelected(bool bInSelected);
+
+    UFUNCTION(BlueprintPure, Category = "Inventory|UI")
+    int32 GetSlotIndex() const { return SlotIndex; }
 
 protected:
     virtual void NativeConstruct() override;
@@ -30,12 +37,17 @@ protected:
     UPROPERTY(meta = (BindWidgetOptional)) UButton* ClickButton = nullptr;
     UPROPERTY(meta = (BindWidgetOptional)) UImage* Icon = nullptr;
     UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* CountText = nullptr;
+    UPROPERTY(meta = (BindWidgetOptional)) UBorder* SelectionBorder = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|UI")
+    FLinearColor SelectedTint = FLinearColor(0.2f, 0.6f, 1.f, 0.35f);
 
 private:
     UPROPERTY() TObjectPtr<UInventoryComponent> Inventory = nullptr;
     UPROPERTY() TObjectPtr<UItemData> Item = nullptr;
     int32 SlotIndex = INDEX_NONE;
     int32 Count = 0;
+    bool  bSelected = false;
 
     UFUNCTION() void HandleClicked();
 

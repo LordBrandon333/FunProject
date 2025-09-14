@@ -1,7 +1,6 @@
 #include "InventoryWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
-#include "Components/PanelSlot.h"
 #include "InventoryComponent.h"
 #include "InventorySlotWidget.h"
 #include "ItemData.h"
@@ -22,15 +21,23 @@ void UInventoryWidget::NativeDestruct()
 
 void UInventoryWidget::InitializeForInventory(UInventoryComponent* InInventory)
 {
-    if (!InInventory) return;
-
     if (Inventory)
     {
         Inventory->OnInventoryChanged.RemoveAll(this);
     }
 
     Inventory = InInventory;
-    Inventory->OnInventoryChanged.AddDynamic(this, &UInventoryWidget::OnInventoryChanged);
+    if (Inventory)
+    {
+        Inventory->OnInventoryChanged.AddDynamic(this, &UInventoryWidget::OnInventoryChanged);
+
+        if (VisibleCount <= 0)
+        {
+            const int32 FirstInv = Inventory->GetFirstInventoryIndex();
+            StartIndex = FirstInv;
+            VisibleCount = Inventory->GetCapacity() - FirstInv;
+        }
+    }
 
     RebuildGrid();
 }
@@ -52,10 +59,9 @@ void UInventoryWidget::OnInventoryChanged()
     RebuildGrid();
 }
 
-void UInventoryWidget::OnSlotClicked(int32 SlotIndex)
+void UInventoryWidget::OnSlotClicked(int32 /*SlotIndex*/)
 {
-    if (!Inventory) return;
-    Inventory->UseSlot(SlotIndex);
+    // (für später: Drag/Drop/Split)
 }
 
 void UInventoryWidget::ClearGrid()
@@ -72,29 +78,23 @@ void UInventoryWidget::RebuildGrid()
 
     ClearGrid();
 
-    ItemsGrid->SetSlotPadding(FMargin(4.f)); 
-    ItemsGrid->SetMinDesiredSlotWidth(64.f);     
-    ItemsGrid->SetMinDesiredSlotHeight(64.f);
-
     const TArray<FInventorySlot>& Slots = Inventory->GetSlots();
     const int32 End = FMath::Clamp(StartIndex + VisibleCount, 0, Slots.Num());
+
+    ItemsGrid->SetSlotPadding(FMargin(4.f));
+    ItemsGrid->SetMinDesiredSlotWidth(64.f);
+    ItemsGrid->SetMinDesiredSlotHeight(64.f);
 
     for (int32 i = StartIndex; i < End; ++i)
     {
         UInventorySlotWidget* SlotW = CreateWidget<UInventorySlotWidget>(this, SlotWidgetClass);
         if (!SlotW) continue;
 
-        const int32 Visual = i - StartIndex;
-        const int32 Row = Visual / Columns;
-        const int32 Col = Visual % Columns;
+        const int32 visual = i - StartIndex;
+        const int32 row = visual / Columns;
+        const int32 col = visual % Columns;
 
-        if (UUniformGridSlot* GS = Cast<UUniformGridSlot>(ItemsGrid->AddChildToUniformGrid(SlotW, Row, Col)))
-        {
-            GS->SetHorizontalAlignment(HAlign_Fill);
-            GS->SetVerticalAlignment(VAlign_Fill);
-        }
-
-        SlotW->Setup(Inventory.Get(), i, Slots[i].Item, Slots[i].Count);
-        SlotW->OnSlotClicked.AddDynamic(this, &UInventoryWidget::OnSlotClicked);
+        ItemsGrid->AddChildToUniformGrid(SlotW, row, col);
+        SlotW->Setup(Inventory, i, Slots[i].Item, Slots[i].Count);
     }
 }
