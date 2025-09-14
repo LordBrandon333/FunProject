@@ -187,6 +187,95 @@ bool UInventoryComponent::UseSelectedHotbarItem()
     return UseSlot(SelectedHotbarIndex);
 }
 
+int32 UInventoryComponent::TryAddToSlot(int32 SlotIndex, UItemData* Item, int32 Count)
+{
+    if (!Slots.IsValidIndex(SlotIndex) || !Item || Count <= 0) return 0;
+
+    FInventorySlot& S = Slots[SlotIndex];
+
+    if (S.IsEmpty())
+    {
+        const int32 Move = FMath::Min(Item->MaxStackSize, Count);
+        S.Item = Item;
+        S.Count = Move;
+        if (Move > 0) BroadcastChanged();
+        return Move;
+    }
+
+    if (S.Item != Item) return 0;
+
+    const int32 Space = FMath::Max(0, Item->MaxStackSize - S.Count);
+    const int32 Move = FMath::Min(Space, Count);
+    S.Count += Move;
+    if (Move > 0) BroadcastChanged();
+    return Move;
+}
+
+int32 UInventoryComponent::TakeFromSlot(int32 SlotIndex, int32 Count, UItemData*& OutItem)
+{
+    if (!Slots.IsValidIndex(SlotIndex) || Count <= 0) { OutItem = nullptr; return 0; }
+
+    FInventorySlot& S = Slots[SlotIndex];
+    if (S.IsEmpty()) { OutItem = nullptr; return 0; }
+
+    OutItem = S.Item;
+    const int32 Take = FMath::Min(S.Count, Count);
+    S.Count -= Take;
+    if (S.Count <= 0) { S.Item = nullptr; S.Count = 0; }
+    if (Take > 0) BroadcastChanged();
+    return Take;
+}
+
+int32 UInventoryComponent::MoveMaxPossible(int32 FromIndex, int32 ToIndex)
+{
+    if (!Slots.IsValidIndex(FromIndex) || !Slots.IsValidIndex(ToIndex) || FromIndex == ToIndex) return 0;
+
+    FInventorySlot& A = Slots[FromIndex];
+    FInventorySlot& B = Slots[ToIndex];
+    if (A.IsEmpty()) return 0;
+
+    if (B.IsEmpty())
+    {
+        const int32 Move = FMath::Min(A.Count, A.Item->MaxStackSize);
+        B.Item = A.Item;
+        B.Count = Move;
+        A.Count -= Move;
+        if (A.Count <= 0) { A.Item = nullptr; A.Count = 0; }
+        if (Move > 0) BroadcastChanged();
+        return Move;
+    }
+
+    if (B.Item != A.Item) return 0;
+
+    const int32 Space = FMath::Max(0, B.Item->MaxStackSize - B.Count);
+    const int32 Move = FMath::Min(Space, A.Count);
+    B.Count += Move;
+    A.Count -= Move;
+    if (A.Count <= 0) { A.Item = nullptr; A.Count = 0; }
+    if (Move > 0) BroadcastChanged();
+    return Move;
+}
+
+bool UInventoryComponent::SwapSlots(int32 AIndex, int32 BIndex)
+{
+    if (!Slots.IsValidIndex(AIndex) || !Slots.IsValidIndex(BIndex) || AIndex == BIndex) return false;
+    Slots.Swap(AIndex, BIndex);
+    BroadcastChanged();
+    return true;
+}
+
+int32 UInventoryComponent::FindOtherStackWithSpace(UItemData* Item, int32 ExcludeIndex) const
+{
+    if (!Item) return INDEX_NONE;
+    for (int32 i = 0; i < Slots.Num(); ++i)
+    {
+        if (i == ExcludeIndex) continue;
+        const FInventorySlot& S = Slots[i];
+        if (S.Item == Item && S.Count < Item->MaxStackSize) return i;
+    }
+    return INDEX_NONE;
+}
+
 void UInventoryComponent::BroadcastChanged()
 {
     OnInventoryChanged.Broadcast();

@@ -50,6 +50,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory|Hotbar") void  OffsetSelectedHotbarIndex(int32 Delta);
     UFUNCTION(BlueprintCallable, Category = "Inventory|Hotbar") bool  UseSelectedHotbarItem();
 
+    // --- Slot-specific Operations
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Slots") int32 TryAddToSlot(int32 SlotIndex, UItemData* Item, int32 Count);
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Slots") int32 TakeFromSlot(int32 SlotIndex, int32 Count, UItemData*& OutItem);
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Slots") int32 MoveMaxPossible(int32 FromIndex, int32 ToIndex);
+    UFUNCTION(BlueprintCallable, Category = "Inventory|Slots") bool SwapSlots(int32 AIndex, int32 BIndex);
+    UFUNCTION(BlueprintPure, Category = "Inventory|Slots") int32 FindOtherStackWithSpace(UItemData* Item, int32 ExcludeIndex) const;
+
     // --- Events
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events") FOnInventoryChanged    OnInventoryChanged;
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events") FOnHotbarIndexChanged  OnHotbarIndexChanged;
