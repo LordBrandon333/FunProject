@@ -19,6 +19,12 @@ void UInventoryComponent::BeginPlay()
     Slots.SetNum(Capacity);
 }
 
+void UInventoryComponent::InitializeComponent()
+{
+    Super::InitializeComponent();
+    Slots.SetNum(Capacity);
+}
+
 int32 UInventoryComponent::FindFirstStackableIndex(UItemData* Item) const
 {
     if (!Item) return INDEX_NONE;

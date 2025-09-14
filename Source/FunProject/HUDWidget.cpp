@@ -11,13 +11,13 @@ void UHUDWidget::NativeConstruct()
     Super::NativeConstruct();
 
     // If not initialized manually, try to auto-wire from owning pawn
-    if (!Player.IsValid())
+    /*if (!Player.IsValid())
     {
         if (APawn* Pawn = GetOwningPlayerPawn())
         {
             InitializeFromCharacter(Cast<APlayerCharacter>(Pawn));
         }
-    }
+    }*/
 }
 
 void UHUDWidget::NativeDestruct()
@@ -28,8 +28,10 @@ void UHUDWidget::NativeDestruct()
 
 void UHUDWidget::InitializeFromCharacter(APlayerCharacter* InCharacter)
 {
+    if (!InCharacter) return;
+    if (Player.Get() == InCharacter) return;
+
     Player = InCharacter;
-    if (!Player.IsValid()) return;
 
     Health = Player->FindComponentByClass<UHealthComponent>();
     Stamina = Player->FindComponentByClass<UStaminaComponent>();

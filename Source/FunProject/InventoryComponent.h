@@ -53,11 +53,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool UseSlot(int32 SlotIndex);
 
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    UPROPERTY(BlueprintAssignable, Category = "Inventory  |Events")
     FOnInventoryChanged OnInventoryChanged;
 
 protected:
     virtual void BeginPlay() override;
+    virtual void InitializeComponent() override;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (ClampMin = "1"))
     int32 Capacity = 24;

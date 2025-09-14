@@ -18,6 +18,8 @@ class UStaminaComponent;
 class UStatusEffectsComponent;
 class UInventoryComponent;
 class UHUDWidget;
+class UInventoryWidget;
+class UHotbarWidget;
 
 
 UCLASS()
@@ -48,6 +50,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_Sprint = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_Crouch = nullptr;
 	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_Interact = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_ToggleInventory = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_UseSlot1 = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_UseSlot2 = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_UseSlot3 = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "Input") UInputAction* IA_UseSlot4 = nullptr;
 
 	// === Input Callbacks ===
 	void Move(const FInputActionValue& Value);
@@ -60,6 +67,10 @@ protected:
 	void StopSprint();
 
 	void ToggleCrouch();
+
+	void ToggleInventory();
+	void QuickUseSlot(int32 Index);
+	void QuickUse1(); void QuickUse2(); void QuickUse3(); void QuickUse4();
 
 	// === Movement Variables ===
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
@@ -97,6 +108,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UHUDWidget> HUDWidgetClass;
 
-	UPROPERTY()
-	UHUDWidget* HUDWidget = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UHotbarWidget> HotbarWidgetClass;
+
+	UPROPERTY() UHUDWidget* HUDWidget = nullptr;
+	UPROPERTY() UInventoryWidget* InventoryWidget = nullptr;
+	UPROPERTY() UHotbarWidget* HotbarWidget = nullptr;
 };

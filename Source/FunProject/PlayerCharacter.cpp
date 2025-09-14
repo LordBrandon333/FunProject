@@ -15,9 +15,12 @@
 #include "NeedComponent.h"
 #include "StaminaComponent.h"
 #include "StatusEffectsComponent.h"
-#include "HUDWidget.h"
-#include "Blueprint/UserWidget.h"
 #include "InventoryComponent.h"
+#include "HUDWidget.h"
+#include "InventoryWidget.h"
+#include "HotbarWidget.h"
+#include "Blueprint/UserWidget.h"
+
 
 // Constructor
 APlayerCharacter::APlayerCharacter()
@@ -78,8 +81,30 @@ void APlayerCharacter::BeginPlay()
 			HUDWidget = CreateWidget<UHUDWidget>(PC, HUDWidgetClass);
 			if (HUDWidget)
 			{
-				HUDWidget->AddToViewport();
+				HUDWidget->AddToViewport(10);
 				HUDWidget->InitializeFromCharacter(this);
+			}
+		}
+
+		if (HotbarWidgetClass)
+		{
+			HotbarWidget = CreateWidget<UHotbarWidget>(PC, HotbarWidgetClass);
+			if (HotbarWidget)
+			{
+				HotbarWidget->AddToViewport(5);
+				if (InventoryComponent) HotbarWidget->InitializeForInventory(InventoryComponent);
+				HotbarWidget->SetHotbarRange(0, 4);
+			}
+		}
+
+		if (InventoryWidgetClass)
+		{
+			InventoryWidget = CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
+			if (InventoryWidget)
+			{
+				InventoryWidget->AddToViewport(20);
+				if (InventoryComponent) InventoryWidget->InitializeForInventory(InventoryComponent);
+				InventoryWidget->SetVisible(false);
 			}
 		}
 	}
@@ -119,6 +144,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		}
 		if (IA_Crouch) EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCrouch);
 		if (IA_Interact) EIC->BindAction(IA_Interact, ETriggerEvent::Started, this, &APlayerCharacter::HandleInteract);
+		if (IA_ToggleInventory) EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+		// probably change later
+		if (IA_UseSlot1) EIC->BindAction(IA_UseSlot1, ETriggerEvent::Started, this, &APlayerCharacter::QuickUse1);
+		if (IA_UseSlot2) EIC->BindAction(IA_UseSlot2, ETriggerEvent::Started, this, &APlayerCharacter::QuickUse2);
+		if (IA_UseSlot3) EIC->BindAction(IA_UseSlot3, ETriggerEvent::Started, this, &APlayerCharacter::QuickUse3);
+		if (IA_UseSlot4) EIC->BindAction(IA_UseSlot4, ETriggerEvent::Started, this, &APlayerCharacter::QuickUse4);
 	}
 }
 
@@ -166,6 +197,47 @@ void APlayerCharacter::ToggleCrouch()
 {
 	if (bIsCrouched) UnCrouch(); else Crouch();
 }
+
+void APlayerCharacter::ToggleInventory()
+{
+	if (!InventoryWidget) return;
+
+	const bool bShow = (InventoryWidget->GetVisibility() != ESlateVisibility::Visible &&
+		InventoryWidget->GetVisibility() != ESlateVisibility::SelfHitTestInvisible);
+
+	InventoryWidget->SetVisible(bShow);
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (bShow)
+		{
+			FInputModeGameAndUI Mode;
+			Mode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+			Mode.SetHideCursorDuringCapture(false);
+			PC->SetInputMode(Mode);
+			PC->bShowMouseCursor = true;
+		}
+		else
+		{
+			FInputModeGameOnly Mode;
+			PC->SetInputMode(Mode);
+			PC->bShowMouseCursor = false;
+		}
+	}
+}
+
+void APlayerCharacter::QuickUseSlot(int32 Index)
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->UseSlot(Index);
+	}
+}
+
+void APlayerCharacter::QuickUse1() { QuickUseSlot(0); }
+void APlayerCharacter::QuickUse2() { QuickUseSlot(1); }
+void APlayerCharacter::QuickUse3() { QuickUseSlot(2); }
+void APlayerCharacter::QuickUse4() { QuickUseSlot(3); }
 
 void APlayerCharacter::HandleInteract()
 {
