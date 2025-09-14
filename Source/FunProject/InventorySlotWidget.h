@@ -13,6 +13,7 @@ class UInventoryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotClicked, int32, SlotIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSlotMouseDown, int32, SlotIndex, FKey, Button, bool, bShiftDown);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotDoubleClicked, int32, SlotIndex);
 
 UCLASS(BlueprintType)
 class FUNPROJECT_API UInventorySlotWidget : public UUserWidget
@@ -35,9 +36,12 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Inventory|UI")
     FOnSlotMouseDown OnSlotMouseDown;
 
+    UPROPERTY(BlueprintAssignable) FOnSlotDoubleClicked OnSlotDoubleClicked;
+
 protected:
     virtual void NativeConstruct() override;
     virtual FReply NativeOnPreviewMouseButtonDown(const FGeometry& G, const FPointerEvent& E) override;
+    virtual FReply NativeOnMouseButtonDoubleClick(const FGeometry& InGeo, const FPointerEvent& InEvent) override;
 
     UPROPERTY(meta = (BindWidgetOptional)) UButton* ClickButton = nullptr;
     UPROPERTY(meta = (BindWidgetOptional)) UImage* Icon = nullptr;

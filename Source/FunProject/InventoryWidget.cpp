@@ -1,26 +1,31 @@
 ﻿#include "InventoryWidget.h"
+
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Components/CanvasPanel.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+
 #include "InventoryComponent.h"
 #include "InventorySlotWidget.h"
 #include "CursorStackWidget.h"
+#include "SplitStackWidget.h"
 #include "ItemData.h"
-#include "InputCoreTypes.h" // FKey
+
+#include "InputCoreTypes.h"
+#include "Framework/Application/SlateApplication.h" // für Alt-Modifier
 
 void UInventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // Cursor-Widget erstellen
+    // Cursor-Widget erzeugen
     if (CursorWidgetClass)
     {
         CursorVisual = CreateWidget<UCursorStackWidget>(GetOwningPlayer(), CursorWidgetClass);
         if (CursorVisual)
         {
             CursorVisual->AddToViewport(1000);
-            CursorVisual->SetAlignmentInViewport(FVector2D(0.f, 0.f));
+            CursorVisual->SetAlignmentInViewport(FVector2D(0.f, 0.f)); // kein Pivot-Offset
             CursorVisual->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
@@ -37,6 +42,8 @@ void UInventoryWidget::NativeDestruct()
         CursorVisual->RemoveFromParent();
         CursorVisual = nullptr;
     }
+    ActiveSplit = nullptr;
+
     Super::NativeDestruct();
 }
 
@@ -46,12 +53,9 @@ void UInventoryWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 
     if (CursorVisual && CursorVisual->IsVisible())
     {
-        if (APlayerController* PC = GetOwningPlayer())
-        {
-            const FVector2D MousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetWorld());
-            // diese coords sind *nicht* DPI-korrigiert -> false:
-            CursorVisual->SetPositionInViewport(MousePos + FVector2D(0.f, 0.f), /*bRemoveDPIScale*/ false);
-        }
+        // Koordinaten ohne DPI-Skalierung -> bRemoveDPIScale=false
+        const FVector2D MousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetWorld());
+        CursorVisual->SetPositionInViewport(MousePos + FVector2D(12.f, 12.f), /*bRemoveDPIScale*/ false);
     }
 }
 
@@ -63,6 +67,7 @@ void UInventoryWidget::InitializeForInventory(UInventoryComponent* InInventory)
     }
 
     Inventory = InInventory;
+
     if (Inventory)
     {
         Inventory->OnInventoryChanged.AddDynamic(this, &UInventoryWidget::OnInventoryChanged);
@@ -102,6 +107,11 @@ void UInventoryWidget::OnInventoryChanged()
     RebuildGrid();
 }
 
+void UInventoryWidget::HandleSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift)
+{
+    OnSlotMouseDown(SlotIndex, Button, bShift);
+}
+
 void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift)
 {
     if (!Inventory) return;
@@ -111,32 +121,41 @@ void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift
 
     const bool bLeft = (Button == EKeys::LeftMouseButton);
     const bool bRight = (Button == EKeys::RightMouseButton);
+    const bool bAlt = FSlateApplication::Get().GetModifierKeys().IsAltDown();
 
-    // SHIFT + LMB: Ganzen Stack vom Bereich A -> Bereich B verschieben.
-    // In Zielbereich erst Teilstacks füllen, dann Rest in freie Slots – kein Auffüllen im Quellbereich.
+    // === ALT + LMB: Split-Dialog (nur wenn Cursor leer) ===
+    if (bLeft && bAlt && CursorCount == 0)
+    {
+        const FInventorySlot& S = Slots[SlotIndex];
+        if (!S.IsEmpty() && S.Count > 1)
+        {
+            OpenSplitDialog(SlotIndex, S.Count - 1);
+        }
+        return;
+    }
+
+    // === SHIFT + LMB: Ganzen Stack Bereich A -> Bereich B schieben ===
     if (bLeft && bShift && CursorCount == 0)
     {
         UItemData* Item = Slots[SlotIndex].Item;
-        if (!Item || Slots[SlotIndex].Count <= 0)
-            return;
+        if (!Item || Slots[SlotIndex].Count <= 0) return;
 
         const int32 FirstInv = Inventory->GetFirstInventoryIndex(); // == HotbarSize
         const int32 Capacity = Inventory->GetCapacity();
         const int32 HotbarSz = Inventory->GetHotbarSize();
+        const bool  bFromInv = (SlotIndex >= FirstInv);
 
-        const bool  bFromInventory = (SlotIndex >= FirstInv);
-        const int32 TargetStart = bFromInventory ? 0 : FirstInv;                 // Zielbereich: Hotbar bzw. Inventar
-        const int32 TargetCount = bFromInventory ? HotbarSz : (Capacity - FirstInv);
+        const int32 TargetStart = bFromInv ? 0 : FirstInv;
+        const int32 TargetCount = bFromInv ? HotbarSz : (Capacity - FirstInv);
 
-        // So lange verschieben, bis Quellslot leer ist oder Zielbereich nichts mehr aufnehmen kann
         int safety = 0;
         while (safety++ < Capacity)
         {
             const TArray<FInventorySlot>& Cur = Inventory->GetSlots();
             if (Cur[SlotIndex].IsEmpty())
-                break; // Quelle ist leer -> fertig
+                break;
 
-            // 1) Teilgefüllten Stack im Zielbereich suchen (ExcludeIndex egal, denn Zielbereich != Quelle)
+            // 1) Teilgefüllten Stack im Zielbereich füllen
             int32 dest = FindPartialStackInRange(Item, INDEX_NONE, TargetStart, TargetCount);
             if (dest != INDEX_NONE)
             {
@@ -144,7 +163,7 @@ void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift
                 continue;
             }
 
-            // 2) Freien Slot im Zielbereich suchen
+            // 2) Freien Slot im Zielbereich nutzen
             const int32 emptyDest = Inventory->FindEmptyIndexInRange(TargetStart, TargetCount);
             if (emptyDest != INDEX_NONE)
             {
@@ -152,25 +171,13 @@ void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift
                 continue;
             }
 
-            // 3) Zielbereich ist voll -> mehr geht nicht
+            // 3) Zielbereich voll -> Ende
             break;
         }
         return;
     }
 
-    // LMB ohne Cursor -> gesamten Stack aufnehmen
-    if (bLeft && CursorCount == 0)
-    {
-        UItemData* Item = nullptr;
-        const int32 Taken = Inventory->TakeFromSlot(SlotIndex, INT32_MAX, Item);
-        if (Taken > 0 && Item)
-        {
-            CursorPickup(Item, Taken);
-        }
-        return;
-    }
-
-    // RMB ohne Cursor -> halben Stack aufnehmen (aufgerundet)
+    // === RMB: ohne Cursor -> halben Stack aufnehmen ===
     if (bRight && CursorCount == 0)
     {
         const FInventorySlot& S = Slots[SlotIndex];
@@ -187,25 +194,31 @@ void UInventoryWidget::OnSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift
         return;
     }
 
-    // Cursor hat Item:
-    if (CursorCount > 0)
+    // === RMB: mit Cursor -> 1 Stück platzieren ===
+    if (bRight && CursorCount > 0)
     {
-        if (bRight)
-        {
-            // RMB mit Cursor -> EIN Stück platzieren
-            CursorPlaceIntoSlot(SlotIndex, /*bSingleUnit=*/true);
-        }
-        else if (bLeft)
-        {
-            // LMB mit Cursor -> so viel wie möglich platzieren (merge/fill/swap)
-            CursorPlaceIntoSlot(SlotIndex, /*bSingleUnit=*/false);
-        }
+        CursorPlaceIntoSlot(SlotIndex, /*bSingleUnit=*/true);
+        return;
     }
-}
 
-void UInventoryWidget::HandleSlotMouseDown(int32 SlotIndex, FKey Button, bool bShift)
-{
-    OnSlotMouseDown(SlotIndex, Button, bShift);
+    // === LMB: ohne Cursor -> ganzen Stack aufnehmen ===
+    if (bLeft && CursorCount == 0)
+    {
+        UItemData* Item = nullptr;
+        const int32 Taken = Inventory->TakeFromSlot(SlotIndex, INT32_MAX, Item);
+        if (Taken > 0 && Item)
+        {
+            CursorPickup(Item, Taken);
+        }
+        return;
+    }
+
+    // === LMB: mit Cursor -> soviel wie möglich platzieren (merge/fill/swap) ===
+    if (bLeft && CursorCount > 0)
+    {
+        CursorPlaceIntoSlot(SlotIndex, /*bSingleUnit=*/false);
+        return;
+    }
 }
 
 void UInventoryWidget::ClearGrid()
@@ -312,7 +325,8 @@ void UInventoryWidget::CursorPlaceIntoSlot(int32 SlotIndex, bool bSingleUnit)
     }
 }
 
-int32 UInventoryWidget::FindPartialStackInRange(UItemData* Item, int32 ExcludeIndex, int32 Start, int32 Count) const
+// === Split helpers ===
+int32 UInventoryWidget::FindPartialStackInRange(UItemData* Item, int32 /*ExcludeIndex*/, int32 Start, int32 Count) const
 {
     if (!Inventory || !Item) return INDEX_NONE;
     const TArray<FInventorySlot>& SlotsRef = Inventory->GetSlots();
@@ -321,12 +335,50 @@ int32 UInventoryWidget::FindPartialStackInRange(UItemData* Item, int32 ExcludeIn
 
     for (int32 i = S; i < E; ++i)
     {
-        if (i == ExcludeIndex) continue;
         const FInventorySlot& Slt = SlotsRef[i];
         if (Slt.Item == Item && Slt.Count > 0 && Slt.Count < Item->MaxStackSize)
-        {
-            return i; // erster teilgefüllter Stack
-        }
+            return i;
     }
     return INDEX_NONE;
+}
+
+void UInventoryWidget::OpenSplitDialog(int32 SlotIndex, int32 MaxCount)
+{
+    if (!SplitWidgetClass) return;
+    if (ActiveSplit) { ActiveSplit->RemoveFromParent(); ActiveSplit = nullptr; }
+
+    ActiveSplit = CreateWidget<USplitStackWidget>(GetOwningPlayer(), SplitWidgetClass);
+    if (ActiveSplit)
+    {
+        ActiveSplit->AddToViewport(999);
+        ActiveSplit->SetIsFocusable(true);
+        ActiveSplit->Init(this, SlotIndex, MaxCount);
+
+        if (APlayerController* PC = GetOwningPlayer())
+        {
+            FInputModeGameAndUI M;
+            M.SetWidgetToFocus(ActiveSplit->TakeWidget());
+            M.SetHideCursorDuringCapture(false);
+            PC->SetInputMode(M);
+            PC->bShowMouseCursor = true;
+        }
+    }
+}
+
+void UInventoryWidget::ConfirmSplit(int32 SlotIndex, int32 Amount)
+{
+    if (!Inventory || Amount <= 0) { ActiveSplit = nullptr; return; }
+
+    UItemData* Item = nullptr;
+    const int32 Taken = Inventory->TakeFromSlot(SlotIndex, Amount, Item);
+    if (Taken > 0 && Item)
+    {
+        CursorPickup(Item, Taken); // Cursor trägt jetzt Teil-Stack
+    }
+    ActiveSplit = nullptr;
+}
+
+void UInventoryWidget::CancelSplit()
+{
+    ActiveSplit = nullptr;
 }
