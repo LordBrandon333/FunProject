@@ -86,6 +86,10 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 
+		const int32 Total = InventoryComponent ? InventoryComponent->GetCapacity() : 24;
+		const int32 HSize = InventoryComponent ? InventoryComponent->GetHotbarSize() : 4;
+		const int32 InvBeg = InventoryComponent ? InventoryComponent->GetFirstInventoryIndex() : 4;
+
 		if (HotbarWidgetClass)
 		{
 			HotbarWidget = CreateWidget<UHotbarWidget>(PC, HotbarWidgetClass);
@@ -93,7 +97,7 @@ void APlayerCharacter::BeginPlay()
 			{
 				HotbarWidget->AddToViewport(5);
 				if (InventoryComponent) HotbarWidget->InitializeForInventory(InventoryComponent);
-				HotbarWidget->SetHotbarRange(0, 4);
+				HotbarWidget->SetHotbarRange(0, HSize);
 			}
 		}
 
@@ -104,6 +108,7 @@ void APlayerCharacter::BeginPlay()
 			{
 				InventoryWidget->AddToViewport(20);
 				if (InventoryComponent) InventoryWidget->InitializeForInventory(InventoryComponent);
+				InventoryWidget->SetRange(InvBeg, FMath::Max(0, Total - 4));
 				InventoryWidget->SetVisible(false);
 			}
 		}
@@ -228,10 +233,9 @@ void APlayerCharacter::ToggleInventory()
 
 void APlayerCharacter::QuickUseSlot(int32 Index)
 {
-	if (InventoryComponent)
-	{
-		InventoryComponent->UseSlot(Index);
-	}
+	if (!InventoryComponent) return;
+	if (Index < 0 || Index >= InventoryComponent->GetHotbarSize()) return;
+	InventoryComponent->UseSlot(Index);
 }
 
 void APlayerCharacter::QuickUse1() { QuickUseSlot(0); }

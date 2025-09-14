@@ -23,6 +23,15 @@ void UInventoryComponent::InitializeComponent()
 {
     Super::InitializeComponent();
     Slots.SetNum(Capacity);
+
+    HotbarSize = FMath::Min(HotbarSize, Capacity);
+    if (HotbarSize > Capacity)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("InventoryComponent: HotbarSize (%d) > Capacity (%d). Clamping."),
+            HotbarSize, Capacity);
+        HotbarSize = Capacity;
+    }
+    OnInventoryChanged.Broadcast();
 }
 
 int32 UInventoryComponent::FindFirstStackableIndex(UItemData* Item) const

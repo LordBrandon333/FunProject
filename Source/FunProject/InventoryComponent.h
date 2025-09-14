@@ -37,6 +37,12 @@ public:
     UFUNCTION(BlueprintPure, Category = "Inventory")
     const TArray<FInventorySlot>& GetSlots() const { return Slots; }
 
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    int32 GetHotbarSize() const { return HotbarSize; }
+
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    int32 GetFirstInventoryIndex() const { return FMath::Clamp(HotbarSize, 0, Capacity); }
+
     // Versucht Count eines Items hinzuzufügen; gibt tatsächlich hinzugefügte Menge zurück
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     int32 TryAddItem(UItemData* Item, int32 Count);
@@ -61,7 +67,10 @@ protected:
     virtual void InitializeComponent() override;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (ClampMin = "1"))
-    int32 Capacity = 24;
+    int32 Capacity = 28;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (ClampMin = "0"))
+    int32 HotbarSize = 4;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
     TArray<FInventorySlot> Slots;
