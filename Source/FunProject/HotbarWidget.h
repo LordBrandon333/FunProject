@@ -7,6 +7,7 @@
 class UHorizontalBox;
 class UInventoryComponent;
 class UInventorySlotWidget;
+class UInventoryWidget;
 
 UCLASS(BlueprintType)
 class FUNPROJECT_API UHotbarWidget : public UUserWidget
@@ -19,6 +20,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|UI")
     void SetHotbarRange(int32 InStartIndex, int32 InSize);
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory|UI")
+    void SetInventoryUI(UInventoryWidget* InUI) { InventoryUI = InUI; }
 
 protected:
     virtual void NativeConstruct() override;
@@ -37,10 +41,12 @@ protected:
 
 private:
     UPROPERTY() TObjectPtr<UInventoryComponent> Inventory = nullptr;
+    UPROPERTY() TObjectPtr<UInventoryWidget> InventoryUI = nullptr;
 
     UFUNCTION() void OnInventoryChanged();
     UFUNCTION() void OnHotbarIndexChanged(int32 NewIndex);
     UFUNCTION() void OnSlotClicked(int32 SlotIndex);
+    UFUNCTION() void OnSlotMouseDownFromHotbar(int32 SlotIndex, FKey Button, bool bShift);
 
     void RebuildBar();
     void ClearBar();

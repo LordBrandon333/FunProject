@@ -12,6 +12,7 @@ class UItemData;
 class UInventoryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotClicked, int32, SlotIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSlotMouseDown, int32, SlotIndex, FKey, Button, bool, bShiftDown);
 
 UCLASS(BlueprintType)
 class FUNPROJECT_API UInventorySlotWidget : public UUserWidget
@@ -31,8 +32,12 @@ public:
     UFUNCTION(BlueprintPure, Category = "Inventory|UI")
     int32 GetSlotIndex() const { return SlotIndex; }
 
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|UI")
+    FOnSlotMouseDown OnSlotMouseDown;
+
 protected:
     virtual void NativeConstruct() override;
+    virtual FReply NativeOnPreviewMouseButtonDown(const FGeometry& G, const FPointerEvent& E) override;
 
     UPROPERTY(meta = (BindWidgetOptional)) UButton* ClickButton = nullptr;
     UPROPERTY(meta = (BindWidgetOptional)) UImage* Icon = nullptr;

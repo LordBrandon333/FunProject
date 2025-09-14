@@ -56,6 +56,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory|Slots") int32 MoveMaxPossible(int32 FromIndex, int32 ToIndex);
     UFUNCTION(BlueprintCallable, Category = "Inventory|Slots") bool SwapSlots(int32 AIndex, int32 BIndex);
     UFUNCTION(BlueprintPure, Category = "Inventory|Slots") int32 FindOtherStackWithSpace(UItemData* Item, int32 ExcludeIndex) const;
+    UFUNCTION(BlueprintPure, Category = "Inventory|Slots") int32 FindEmptyIndexInRange(int32 StartIndex, int32 Count) const;
 
     // --- Events
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events") FOnInventoryChanged    OnInventoryChanged;

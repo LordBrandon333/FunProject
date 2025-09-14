@@ -5,6 +5,7 @@
 #include "Components/Border.h"
 #include "ItemData.h"
 #include "InventoryComponent.h"
+#include "InputCoreTypes.h"
 
 void UInventorySlotWidget::NativeConstruct()
 {
@@ -15,6 +16,17 @@ void UInventorySlotWidget::NativeConstruct()
         ClickButton->SetClickMethod(EButtonClickMethod::MouseDown);
     }
     RefreshVisuals();
+}
+
+FReply UInventorySlotWidget::NativeOnPreviewMouseButtonDown(const FGeometry& G, const FPointerEvent& E)
+{
+    const FKey Btn = E.GetEffectingButton();
+    if (Btn == EKeys::LeftMouseButton || Btn == EKeys::RightMouseButton)
+    {
+        OnSlotMouseDown.Broadcast(SlotIndex, Btn, E.IsShiftDown());
+        return FReply::Handled();
+    }
+    return Super::NativeOnPreviewMouseButtonDown(G, E);
 }
 
 void UInventorySlotWidget::Setup(UInventoryComponent* InInventory, int32 InSlotIndex, UItemData* InItem, int32 InCount)

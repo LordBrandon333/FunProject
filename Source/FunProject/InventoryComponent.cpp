@@ -276,6 +276,18 @@ int32 UInventoryComponent::FindOtherStackWithSpace(UItemData* Item, int32 Exclud
     return INDEX_NONE;
 }
 
+int32 UInventoryComponent::FindEmptyIndexInRange(int32 StartIndex, int32 Count) const
+{
+    if (Slots.Num() == 0 || Count <= 0) return INDEX_NONE;
+    const int32 Start = FMath::Clamp(StartIndex, 0, Slots.Num());
+    const int32 End = FMath::Clamp(Start + Count, 0, Slots.Num());
+    for (int32 i = Start; i < End; ++i)
+    {
+        if (Slots[i].IsEmpty()) return i;
+    }
+    return INDEX_NONE;
+}
+
 void UInventoryComponent::BroadcastChanged()
 {
     OnInventoryChanged.Broadcast();

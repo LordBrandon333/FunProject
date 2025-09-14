@@ -4,6 +4,8 @@
 #include "InventoryComponent.h"
 #include "InventorySlotWidget.h"
 #include "ItemData.h"
+#include "InventoryWidget.h"
+#include "InputCoreTypes.h"
 
 void UHotbarWidget::NativeConstruct()
 {
@@ -98,6 +100,7 @@ void UHotbarWidget::RebuildBar()
         HotbarBox->AddChildToHorizontalBox(SlotW);
         SlotW->Setup(Inventory, i, Slots[i].Item, Slots[i].Count);
         SlotW->OnSlotClicked.AddDynamic(this, &UHotbarWidget::OnSlotClicked);
+        SlotW->OnSlotMouseDown.AddDynamic(this, &UHotbarWidget::OnSlotMouseDownFromHotbar);
     }
 }
 
@@ -115,6 +118,27 @@ void UHotbarWidget::UpdateSelection()
             const int32 AbsoluteIndex = StartIndex + c;
             const bool bIsSelected = (AbsoluteIndex == (StartIndex + Selected));
             SlotW->SetSelected(bIsSelected);
+        }
+    }
+}
+
+void UHotbarWidget::OnSlotMouseDownFromHotbar(int32 SlotIndex, FKey Button, bool bShift)
+{
+    // Wenn Inventar offen ist: dieselbe Cursor-Logik wie im InventoryWidget nutzen
+    if (InventoryUI &&
+        (InventoryUI->GetVisibility() == ESlateVisibility::Visible ||
+            InventoryUI->GetVisibility() == ESlateVisibility::SelfHitTestInvisible))
+    {
+        InventoryUI->HandleSlotMouseDown(SlotIndex, Button, bShift);
+        return;
+    }
+
+    // Wenn Inventar zu ist: Klick soll nur Hotbar-Slot AUSWÄHLEN (nicht verschieben)
+    if (Inventory)
+    {
+        if (SlotIndex >= StartIndex && SlotIndex < StartIndex + HotbarSize)
+        {
+            Inventory->SetSelectedHotbarIndex(SlotIndex - StartIndex);
         }
     }
 }

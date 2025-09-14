@@ -88,6 +88,7 @@ void APlayerCharacter::BeginPlay()
                 if (InventoryComponent) HotbarWidget->InitializeForInventory(InventoryComponent);
                 // Range aus Component übernehmen
                 HotbarWidget->SetHotbarRange(0, InventoryComponent ? InventoryComponent->GetHotbarSize() : 4);
+
             }
         }
 
@@ -106,6 +107,8 @@ void APlayerCharacter::BeginPlay()
                 InventoryWidget->SetVisible(false);
             }
         }
+
+        if (HotbarWidget && InventoryWidget) HotbarWidget->SetInventoryUI(InventoryWidget);
     }
 
     if (HealthComponent)
