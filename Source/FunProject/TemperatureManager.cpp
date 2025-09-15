@@ -4,6 +4,7 @@
 #include "HeatSourceComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "TemperatureZoneVolume.h"
 
 void UTemperatureManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -50,37 +51,84 @@ float UTemperatureManager::SampleDiurnalDeltaC(float Hours) const
 float UTemperatureManager::GetAmbientTemperatureC(const FVector& WorldLocation) const
 {
     const float Base = Rules ? Rules->BaseAmbientC : 20.f;
-    const float Diurnal = SampleDiurnalDeltaC(CachedTimeOfDayHours);
 
+    // Zonen sammeln
+    const FTemperatureZoneModifiers Mods = GetCombinedZoneModifiers(WorldLocation);
+
+    // Diurnal mit Zonenskalierung
+    const float Diurnal = SampleDiurnalDeltaC(CachedTimeOfDayHours) * Mods.DiurnalScale;
+
+    // Höhe (cm -> 100m)
     float AltitudeDelta = 0.f;
     if (Rules)
     {
-        const float DzHundredsOfMeters = (WorldLocation.Z - Rules->SeaLevelZ) / 10000.f; // in 100m
+        const float DzHundredsOfMeters = (WorldLocation.Z - Rules->SeaLevelZ) / 10000.f;
         AltitudeDelta = DzHundredsOfMeters * Rules->AltitudeLapseRateCPer100m;
     }
 
-    return Base + Diurnal + AltitudeDelta;
+    const float Raw = Base + Diurnal + AltitudeDelta;
+    return Raw * Mods.AmbientMul + Mods.AmbientAddC;
 }
 
 float UTemperatureManager::ComputeHeatSourceContributionC(const FVector& WorldLocation) const
 {
     float Sum = 0.f;
-    int32 Count = 0;
+
     for (const TWeakObjectPtr<UHeatSourceComponent>& Weak : HeatSources)
     {
         const UHeatSourceComponent* S = Weak.Get();
         if (!S || !S->bEnabled) continue;
-        ++Count;
 
-        const float Dist = FVector::Dist(WorldLocation, S->GetComponentLocation());
+        const float Dist = FVector::Dist(WorldLocation, S->GetComponentLocation()); // 3D; nimm Dist2D wenn gewünscht
         if (Dist >= S->Radius || S->Radius <= 1.f) continue;
 
         const float Alpha = 1.f - (Dist / S->Radius);
         const float Fall = FMath::Pow(FMath::Clamp(Alpha, 0.f, 1.f), S->FalloffExponent);
         Sum += S->TemperatureDeltaC * Fall;
     }
-    //UE_LOG(LogTemp, Log, TEXT("[Temp] HeatSources=%d  HeatC=%.2f"), Count, Sum);
+
+    // Zonen-Radiantskalierung
+    const FTemperatureZoneModifiers Mods = GetCombinedZoneModifiers(WorldLocation);
+    Sum *= Mods.RadiantScale;
+
     return Sum;
+}
+
+void UTemperatureManager::RegisterZone(ATemperatureZoneVolume* Zone)
+{
+    Zones.AddUnique(Zone);
+}
+
+void UTemperatureManager::UnregisterZone(ATemperatureZoneVolume* Zone)
+{
+    Zones.Remove(Zone);
+}
+
+FTemperatureZoneModifiers UTemperatureManager::GetCombinedZoneModifiers(const FVector& WorldLocation) const
+{
+    FTemperatureZoneModifiers Out;
+    Out.AmbientAddC = 0.f;
+    Out.AmbientMul = 1.f;
+    Out.DiurnalScale = 1.f;
+    Out.RadiantScale = 1.f;
+    Out.WindScale = 1.f;
+    Out.bIsIndoors = false;
+
+    for (const TWeakObjectPtr<ATemperatureZoneVolume>& WZ : Zones)
+    {
+        const ATemperatureZoneVolume* Z = WZ.Get();
+        if (!Z) continue;
+        if (!Z->ContainsPoint(WorldLocation)) continue;
+
+        const FTemperatureZoneModifiers& M = Z->Modifiers;
+        Out.AmbientAddC += M.AmbientAddC;
+        Out.AmbientMul *= FMath::Max(0.f, M.AmbientMul);
+        Out.DiurnalScale *= FMath::Max(0.f, M.DiurnalScale);
+        Out.RadiantScale *= FMath::Max(0.f, M.RadiantScale);
+        Out.WindScale *= FMath::Max(0.f, M.WindScale);
+        Out.bIsIndoors = Out.bIsIndoors || M.bIsIndoors;
+    }
+    return Out;
 }
 
 void UTemperatureManager::ComputeBodyStep(

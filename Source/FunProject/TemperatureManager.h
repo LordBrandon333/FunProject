@@ -5,6 +5,7 @@
 #include "TemperatureManager.generated.h"
 
 class UHeatSourceComponent;
+class ATemperatureZoneVolume;
 
 USTRUCT(BlueprintType)
 struct FTemperatureQuery
@@ -14,6 +15,8 @@ struct FTemperatureQuery
     UPROPERTY(EditAnywhere, BlueprintReadWrite) float Wetness01 = 0.f;  // 0..1
     UPROPERTY(EditAnywhere, BlueprintReadWrite) bool bIsIndoors = false; // spätere Nutzung möglich
 };
+
+struct FTemperatureZoneModifiers;
 
 UCLASS()
 class FUNPROJECT_API UTemperatureManager : public UWorldSubsystem
@@ -31,6 +34,11 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Temperature")
     float ComputeHeatSourceContributionC(const FVector& WorldLocation) const;
+
+    // Zones
+    void RegisterZone(ATemperatureZoneVolume* Zone);
+    void UnregisterZone(ATemperatureZoneVolume* Zone);
+    FTemperatureZoneModifiers GetCombinedZoneModifiers(const FVector& WorldLocation) const;
 
     // Eine Integrationsfunktion, die Core/Skin auf Basis von Umgebung etc. fortschreibt
     void ComputeBodyStep(
@@ -51,6 +59,7 @@ public:
 private:
     UPROPERTY() TObjectPtr<UTemperatureRules> Rules = nullptr;
     UPROPERTY() TArray<TWeakObjectPtr<UHeatSourceComponent>> HeatSources;
+    UPROPERTY() TArray<TWeakObjectPtr<ATemperatureZoneVolume>> Zones;
 
     float CachedTimeOfDayHours = 12.f;
 
