@@ -5,6 +5,7 @@
 #include "HealthComponent.h"
 #include "StaminaComponent.h"
 #include "NeedComponent.h"
+#include "TemperatureComponent.h"
 
 void UHUDWidget::NativeConstruct()
 {
@@ -22,7 +23,12 @@ void UHUDWidget::NativeConstruct()
 
 void UHUDWidget::NativeDestruct()
 {
-    // (Optional) Remove dynamic bindings if you add explicit RemoveDynamic calls later
+    Health->OnHealthChanged.RemoveAll(this);
+    Stamina->OnStaminaChanged.RemoveAll(this);
+    Hunger->OnNeedChanged.RemoveAll(this);
+    Thirst->OnNeedChanged.RemoveAll(this);
+    Temperature->OnAmbientTempChanged.RemoveAll(this);
+    Temperature->OnBodyTempChanged.RemoveAll(this);
     Super::NativeDestruct();
 }
 
@@ -35,6 +41,7 @@ void UHUDWidget::InitializeFromCharacter(APlayerCharacter* InCharacter)
 
     Health = Player->FindComponentByClass<UHealthComponent>();
     Stamina = Player->FindComponentByClass<UStaminaComponent>();
+    Temperature = Player->FindComponentByClass<UTemperatureComponent>();
     // Needs: typed pointers exist (UHungerComponent/UThirstComponent), but both derive UNeedComponent – reicht hier:
     Hunger = Player->FindComponentByClass<UNeedComponent>(); // first found; we’ll reassign properly below
     Thirst = nullptr;
@@ -52,6 +59,12 @@ void UHUDWidget::InitializeFromCharacter(APlayerCharacter* InCharacter)
         Hunger->OnNeedChanged.AddDynamic(this, &UHUDWidget::OnNeedChanged);
     if (Thirst.IsValid())
         Thirst->OnNeedChanged.AddDynamic(this, &UHUDWidget::OnNeedChanged);
+    if (Temperature.IsValid())
+    {
+        Temperature->OnAmbientTempChanged.AddDynamic(this, &UHUDWidget::OnAmbientTempChanged);
+        Temperature->OnBodyTempChanged.AddDynamic(this, &UHUDWidget::OnBodyTempChanged);
+        UpdateTempTexts();
+    }
 
     RefreshAll();
 }
@@ -90,6 +103,29 @@ void UHUDWidget::OnNeedChanged(UNeedComponent* Comp, float /*OldV*/, float NewV,
         SetBar(HungerBar, HungerText, NewV, Comp->GetMax());
     else if (Comp == Thirst.Get())
         SetBar(ThirstBar, ThirstText, NewV, Comp->GetMax());
+}
+
+void UHUDWidget::OnAmbientTempChanged(float OldC, float NewC)
+{
+    if (AmbientTempText)
+    {
+        AmbientTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), NewC)));
+    }
+}
+
+void UHUDWidget::OnBodyTempChanged(float OldC, float NewC)
+{
+    if (BodyTempText)
+    {
+        BodyTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), NewC)));
+    }
+}
+
+void UHUDWidget::UpdateTempTexts()
+{
+    if (!Temperature.IsValid()) return;
+    if (AmbientTempText) AmbientTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), Temperature->GetAmbientTempC())));
+    if (BodyTempText)    BodyTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), Temperature->GetBodyTempC())));
 }
 
 void UHUDWidget::SetBar(UProgressBar* Bar, UTextBlock* Txt, float Current, float Max)

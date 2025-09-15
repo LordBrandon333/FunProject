@@ -8,6 +8,8 @@ class AWorldTimeManager;
 class UHealthComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBodyTempChanged, float, OldC, float, NewC);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmbientTempChanged, float, OldC, float, NewC);
+
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class FUNPROJECT_API UTemperatureComponent : public UActorComponent
@@ -24,6 +26,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Temp")
     FOnBodyTempChanged OnBodyTempChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Temp")
+    FOnAmbientTempChanged OnAmbientTempChanged;
 
     // einfache Stellschrauben
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Temp|Balance")

@@ -10,6 +10,7 @@ class APlayerCharacter;
 class UHealthComponent;
 class UStaminaComponent;
 class UNeedComponent;
+class UTemperatureComponent;
 
 UCLASS(BlueprintType)
 class FUNPROJECT_API UHUDWidget : public UUserWidget
@@ -35,6 +36,8 @@ protected:
     UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* StaminaText = nullptr;
     UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* HungerText = nullptr;
     UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* ThirstText = nullptr;
+    UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* AmbientTempText = nullptr;
+    UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* BodyTempText = nullptr;
 
 private:
     TWeakObjectPtr<APlayerCharacter> Player;
@@ -42,6 +45,7 @@ private:
     TWeakObjectPtr<UStaminaComponent> Stamina;
     TWeakObjectPtr<UNeedComponent>   Hunger;
     TWeakObjectPtr<UNeedComponent>   Thirst;
+    TWeakObjectPtr<UTemperatureComponent> Temperature;
 
     void RefreshAll(); // initial fill & fallbacks
 
@@ -49,6 +53,9 @@ private:
     UFUNCTION() void OnHealthChanged(UHealthComponent* Comp, float OldV, float NewV, float Delta, AActor* Instigator);
     UFUNCTION() void OnStaminaChanged(class UStaminaComponent* Comp, float OldV, float NewV, float Delta);
     UFUNCTION() void OnNeedChanged(UNeedComponent* Comp, float OldV, float NewV, float Delta);
-
+    UFUNCTION() void OnAmbientTempChanged(float OldC, float NewC);
+    UFUNCTION() void OnBodyTempChanged(float OldC, float NewC);
+    
+    void UpdateTempTexts();
     void SetBar(UProgressBar* Bar, UTextBlock* Txt, float Current, float Max);
 };

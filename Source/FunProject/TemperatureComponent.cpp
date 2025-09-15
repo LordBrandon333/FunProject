@@ -38,6 +38,7 @@ void UTemperatureComponent::UpdateOnce()
 	const FVector Loc = GetOwner()->GetActorLocation();
 
 	const float OldBody = BodyTempC;
+	const float OldAmbient = AmbientTempC;
 
 	AmbientTempC = ComputeAmbientAt(Loc);
 	const float heatSorces = SumHeatSourcesAt(Loc);
@@ -48,6 +49,11 @@ void UTemperatureComponent::UpdateOnce()
 
 	const float target = AmbientTempC + heatSorces + metabolic;
 	BodyTempC += (target - BodyTempC) * (k * UpdateInterval);
+
+	if (!FMath::IsNearlyEqual(OldAmbient, AmbientTempC, 0.05f))
+	{
+		OnAmbientTempChanged.Broadcast(OldAmbient, AmbientTempC);
+	}
 
 	if (!FMath::IsNearlyEqual(OldBody, BodyTempC, 0.01f))
 	{
