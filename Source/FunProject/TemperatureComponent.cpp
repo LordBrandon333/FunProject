@@ -38,10 +38,8 @@ void UTemperatureComponent::TickComponent(float Dt, ELevelTick TickType, FActorC
     {
         LastBroadcastCore = CoreTempC;
         OnCoreTempChanged.Broadcast(CoreTempC);
-        OnBodyTempChanged.Broadcast(CoreTempC); // Alias
     }
 
     // Ambient: an neues und altes Event feuern
     OnAmbientEffectiveChanged.Broadcast(AmbientC, HeatC);
-    OnAmbientTempChanged.Broadcast(AmbientC, HeatC);
 }

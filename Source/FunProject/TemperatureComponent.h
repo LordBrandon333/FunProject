@@ -28,10 +28,6 @@ public:
     UPROPERTY(BlueprintAssignable) FOnCoreTemperatureChanged OnCoreTempChanged;
     UPROPERTY(BlueprintAssignable) FOnAmbientEffectiveChanged OnAmbientEffectiveChanged;
 
-    // Alias
-    UPROPERTY(BlueprintAssignable) FOnCoreTemperatureChanged OnBodyTempChanged;               
-    UPROPERTY(BlueprintAssignable) FOnAmbientEffectiveChanged OnAmbientTempChanged;
-
     UTemperatureComponent();
 
     virtual void BeginPlay() override;
