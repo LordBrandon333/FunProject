@@ -7,6 +7,7 @@
 #include "WorldTimeManager.generated.h"
 
 class ADirectionalLight;
+class UTemperatureManager;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTimeChanged, float, NormalizedTimeOfDay);
 
@@ -30,7 +31,7 @@ public:
     float GetTimeOfDayNormalized() const { return CurrentSeconds / SecondsPerDay; }
 
     UFUNCTION(BlueprintPure, Category = "Time")
-    float GetTimeOfDayHours() const { return (CurrentSeconds / 3600.f); }
+    float GetTimeOfDayHours() const { return GetTimeOfDayNormalized() * 24.f; }
 
 public:
     UPROPERTY(EditAnywhere, Category = "Time")
@@ -58,6 +59,7 @@ private:
     static constexpr float SecondsPerDay = 24.f * 3600.f;
     float CurrentSeconds = 0.f;
     float TimeScale = 1.f;
+    TWeakObjectPtr<UTemperatureManager> TemperatureManager;
 
     void UpdateSun();
 };

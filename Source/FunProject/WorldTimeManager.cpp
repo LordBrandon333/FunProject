@@ -4,6 +4,7 @@
 #include "WorldTimeManager.h"
 #include "Engine/DirectionalLight.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TemperatureManager.h"
 
 
 // Sets default values
@@ -17,6 +18,16 @@ void AWorldTimeManager::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentSeconds = FMath::Fmod(FMath::Max(0.f, StartTimeOfDayHours) * 3600.f, SecondsPerDay);
+
+	if (UWorld* W = GetWorld())
+	{
+		TemperatureManager = W->GetSubsystem<UTemperatureManager>();
+		if (TemperatureManager.IsValid())
+		{
+			TemperatureManager->SetTimeOfDayHours(GetTimeOfDayHours());
+		}
+	}
+
 	UpdateSun();
 	OnTimeChanged.Broadcast(GetTimeOfDayNormalized());
 }
@@ -45,6 +56,19 @@ void AWorldTimeManager::Tick(float DeltaSeconds)
 	CurrentSeconds = FMath::Fmod(CurrentSeconds + DeltaSeconds * GameDayScale * TimeScale, SecondsPerDay);
 
 	UpdateSun();
+
+	if (!TemperatureManager.IsValid())
+	{
+		if (UWorld* W = GetWorld())
+		{
+			TemperatureManager = W->GetSubsystem<UTemperatureManager>();
+		}
+	}
+	if (TemperatureManager.IsValid())
+	{
+		TemperatureManager->SetTimeOfDayHours(GetTimeOfDayHours());
+	}
+
 	OnTimeChanged.Broadcast(GetTimeOfDayNormalized());
 }
 
