@@ -12,6 +12,7 @@
 #include "NeedComponent.h"
 #include "StaminaComponent.h"
 #include "InventoryComponent.h"
+#include "TemperatureComponent.h"
 #include "HUDWidget.h"
 #include "InventoryWidget.h"
 #include "HotbarWidget.h"
@@ -47,6 +48,7 @@ APlayerCharacter::APlayerCharacter()
     ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
     StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
     InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+    TemperatureComponent = CreateDefaultSubobject<UTemperatureComponent>(TEXT("TemperatureComponent"));
 }
 
 void APlayerCharacter::BeginPlay()

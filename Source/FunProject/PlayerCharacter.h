@@ -16,6 +16,7 @@ class UHungerComponent;
 class UThirstComponent;
 class UStaminaComponent;
 class UInventoryComponent;
+class UTemperatureComponent;
 class UHUDWidget;
 class UInventoryWidget;
 class UHotbarWidget;
@@ -54,6 +55,9 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UInventoryComponent* InventoryComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UTemperatureComponent* TemperatureComponent;
 
     // === Enhanced Input ===
     UPROPERTY(EditDefaultsOnly, Category = "Input")
