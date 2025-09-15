@@ -53,8 +53,8 @@ private:
     UFUNCTION() void OnHealthChanged(UHealthComponent* Comp, float OldV, float NewV, float Delta, AActor* Instigator);
     UFUNCTION() void OnStaminaChanged(class UStaminaComponent* Comp, float OldV, float NewV, float Delta);
     UFUNCTION() void OnNeedChanged(UNeedComponent* Comp, float OldV, float NewV, float Delta);
-    UFUNCTION() void OnAmbientTempChanged(float OldC, float NewC);
-    UFUNCTION() void OnBodyTempChanged(float OldC, float NewC);
+    UFUNCTION() void OnAmbientTempChanged(float AmbientC, float HeatContributionC);
+    UFUNCTION() void OnBodyTempChanged(float NewCoreC);
     
     void UpdateTempTexts();
     void SetBar(UProgressBar* Bar, UTextBlock* Txt, float Current, float Max);

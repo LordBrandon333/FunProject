@@ -27,8 +27,8 @@ void UHUDWidget::NativeDestruct()
     Stamina->OnStaminaChanged.RemoveAll(this);
     Hunger->OnNeedChanged.RemoveAll(this);
     Thirst->OnNeedChanged.RemoveAll(this);
-    Temperature->OnAmbientTempChanged.RemoveAll(this);
-    Temperature->OnBodyTempChanged.RemoveAll(this);
+    Temperature->OnAmbientEffectiveChanged.RemoveAll(this);
+    Temperature->OnCoreTempChanged.RemoveAll(this);
     Super::NativeDestruct();
 }
 
@@ -61,8 +61,8 @@ void UHUDWidget::InitializeFromCharacter(APlayerCharacter* InCharacter)
         Thirst->OnNeedChanged.AddDynamic(this, &UHUDWidget::OnNeedChanged);
     if (Temperature.IsValid())
     {
-        Temperature->OnAmbientTempChanged.AddDynamic(this, &UHUDWidget::OnAmbientTempChanged);
-        Temperature->OnBodyTempChanged.AddDynamic(this, &UHUDWidget::OnBodyTempChanged);
+        Temperature->OnAmbientEffectiveChanged.AddDynamic(this, &UHUDWidget::OnAmbientTempChanged);
+        Temperature->OnCoreTempChanged.AddDynamic(this, &UHUDWidget::OnBodyTempChanged);
         UpdateTempTexts();
     }
 
@@ -109,15 +109,15 @@ void UHUDWidget::OnAmbientTempChanged(float OldC, float NewC)
 {
     if (AmbientTempText)
     {
-        AmbientTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), NewC)));
+        AmbientTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f \u00B0C"), Temperature->GetAmbientTempC())));
     }
 }
 
-void UHUDWidget::OnBodyTempChanged(float OldC, float NewC)
+void UHUDWidget::OnBodyTempChanged(float NewCoreC)
 {
     if (BodyTempText)
     {
-        BodyTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), NewC)));
+        BodyTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f \u00B0C"), Temperature->GetBodyTempC())));
     }
 }
 
