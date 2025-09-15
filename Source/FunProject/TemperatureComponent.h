@@ -37,6 +37,34 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
     float LastOperativeAmbientC = 20.f;
 
+    // --- Performance / LOD ---
+    UPROPERTY(EditAnywhere, Category = "Performance")
+    float UpdateInterval = 0.1f; // 10 Hz
+
+    UPROPERTY(EditAnywhere, Category = "Performance")
+    float AmbientBroadcastEpsilon = 0.05f; // nur senden, wenn ±0.05°C geändert
+
+    UPROPERTY(EditAnywhere, Category = "Performance")
+    bool bUseAdaptiveTickInterval = true;
+
+    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.01"))
+    float UpdateIntervalNear = 0.2f;   // <= 30 m
+
+    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.01"))
+    float UpdateIntervalMid = 0.5f;   // 30–60 m
+
+    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.01"))
+    float UpdateIntervalFar = 1.0f;   // > 60 m
+
+    // Distanz-Schwellen in cm (UE ist cm-basiert)
+    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.0"))
+    float DistNearCm = 3000.f;         // 30 m
+
+    UPROPERTY(EditAnywhere, Category = "Performance", meta = (ClampMin = "0.0"))
+    float DistFarCm = 6000.f;         // 60 m
+
+    float LastSentEffectiveAmbient = TNumericLimits<float>::Lowest();
+
     // Events
     UPROPERTY(BlueprintAssignable)
     FOnCoreTemperatureChanged OnCoreTempChanged;

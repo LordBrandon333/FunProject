@@ -70,28 +70,27 @@ float UTemperatureManager::GetAmbientTemperatureC(const FVector& WorldLocation) 
     return Raw * Mods.AmbientMul + Mods.AmbientAddC;
 }
 
-float UTemperatureManager::ComputeHeatSourceContributionC(const FVector& WorldLocation) const
+float UTemperatureManager::ComputeHeatSourceContributionC(const FVector& P) const
 {
     float Sum = 0.f;
-
-    for (const TWeakObjectPtr<UHeatSourceComponent>& Weak : HeatSources)
+    for (const auto& Weak : HeatSources)
     {
         const UHeatSourceComponent* S = Weak.Get();
         if (!S || !S->bEnabled) continue;
 
-        const float Dist = FVector::Dist(WorldLocation, S->GetComponentLocation()); // 3D; nimm Dist2D wenn gewünscht
-        if (Dist >= S->Radius || S->Radius <= 1.f) continue;
+        const float r2 = S->Radius * S->Radius;
+        const float d2 = FVector::DistSquared(P, S->GetComponentLocation());
+        if (d2 >= r2 || S->Radius <= 1.f) continue;
 
+        const float Dist = FMath::Sqrt(d2);
         const float Alpha = 1.f - (Dist / S->Radius);
         const float Fall = FMath::Pow(FMath::Clamp(Alpha, 0.f, 1.f), S->FalloffExponent);
         Sum += S->TemperatureDeltaC * Fall;
     }
 
-    // Zonen-Radiantskalierung
-    const FTemperatureZoneModifiers Mods = GetCombinedZoneModifiers(WorldLocation);
-    Sum *= Mods.RadiantScale;
-
-    return Sum;
+    // Zonen-Radiantskalierung bleibt wie gehabt
+    const FTemperatureZoneModifiers Mods = GetCombinedZoneModifiers(P);
+    return Sum * Mods.RadiantScale;
 }
 
 void UTemperatureManager::RegisterZone(ATemperatureZoneVolume* Zone)
