@@ -10,6 +10,8 @@ class APlayerCharacter;
 class UHealthComponent;
 class UStaminaComponent;
 class UNeedComponent;
+class UHungerComponent;   // optional forward
+class UThirstComponent;   // optional forward
 class UTemperatureComponent;
 
 UCLASS(BlueprintType)
@@ -40,22 +42,26 @@ protected:
     UPROPERTY(meta = (BindWidgetOptional)) UTextBlock* BodyTempText = nullptr;
 
 private:
-    TWeakObjectPtr<APlayerCharacter> Player;
-    TWeakObjectPtr<UHealthComponent> Health;
-    TWeakObjectPtr<UStaminaComponent> Stamina;
-    TWeakObjectPtr<UNeedComponent>   Hunger;
-    TWeakObjectPtr<UNeedComponent>   Thirst;
-    TWeakObjectPtr<UTemperatureComponent> Temperature;
+    TWeakObjectPtr<APlayerCharacter>        Player;
+    TWeakObjectPtr<UHealthComponent>        Health;
+    TWeakObjectPtr<UStaminaComponent>       Stamina;
+    TWeakObjectPtr<UNeedComponent>          Hunger;
+    TWeakObjectPtr<UNeedComponent>          Thirst;
+    TWeakObjectPtr<UTemperatureComponent>   Temperature;
 
     void RefreshAll(); // initial fill & fallbacks
+    void UpdateTempTexts(); // initial temperature texts
 
-    // --- Event handlers (signatures must match your components) ---
+    // --- Event handlers (match your components) ---
     UFUNCTION() void OnHealthChanged(UHealthComponent* Comp, float OldV, float NewV, float Delta, AActor* Instigator);
     UFUNCTION() void OnStaminaChanged(class UStaminaComponent* Comp, float OldV, float NewV, float Delta);
     UFUNCTION() void OnNeedChanged(UNeedComponent* Comp, float OldV, float NewV, float Delta);
+
+    // IMPORTANT: This matches TemperatureComponent's event: (AmbientC, HeatContributionC)
     UFUNCTION() void OnAmbientTempChanged(float AmbientC, float HeatContributionC);
     UFUNCTION() void OnBodyTempChanged(float NewCoreC);
-    
-    void UpdateTempTexts();
+
+    // Helper
+    static FText FormatDegC(float Value);
     void SetBar(UProgressBar* Bar, UTextBlock* Txt, float Current, float Max);
 };

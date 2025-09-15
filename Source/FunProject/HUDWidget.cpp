@@ -11,24 +11,31 @@ void UHUDWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // If not initialized manually, try to auto-wire from owning pawn
-    /*if (!Player.IsValid())
+    // Optional auto-wire (auskommentiert lassen, wenn du explizit Initializer callst)
+    /*
+    if (!Player.IsValid())
     {
         if (APawn* Pawn = GetOwningPlayerPawn())
         {
             InitializeFromCharacter(Cast<APlayerCharacter>(Pawn));
         }
-    }*/
+    }
+    */
 }
 
 void UHUDWidget::NativeDestruct()
 {
-    Health->OnHealthChanged.RemoveAll(this);
-    Stamina->OnStaminaChanged.RemoveAll(this);
-    Hunger->OnNeedChanged.RemoveAll(this);
-    Thirst->OnNeedChanged.RemoveAll(this);
-    Temperature->OnAmbientEffectiveChanged.RemoveAll(this);
-    Temperature->OnCoreTempChanged.RemoveAll(this);
+    // Sicher deregistrieren (nur wenn gültig)
+    if (Health.IsValid()) { Health->OnHealthChanged.RemoveAll(this); }
+    if (Stamina.IsValid()) { Stamina->OnStaminaChanged.RemoveAll(this); }
+    if (Hunger.IsValid()) { Hunger->OnNeedChanged.RemoveAll(this); }
+    if (Thirst.IsValid()) { Thirst->OnNeedChanged.RemoveAll(this); }
+    if (Temperature.IsValid())
+    {
+        Temperature->OnAmbientEffectiveChanged.RemoveAll(this);
+        Temperature->OnCoreTempChanged.RemoveAll(this);
+    }
+
     Super::NativeDestruct();
 }
 
@@ -37,32 +44,40 @@ void UHUDWidget::InitializeFromCharacter(APlayerCharacter* InCharacter)
     if (!InCharacter) return;
     if (Player.Get() == InCharacter) return;
 
+    // Wenn bereits gebunden: alte Bindings lösen
+    NativeDestruct();
+
     Player = InCharacter;
 
     Health = Player->FindComponentByClass<UHealthComponent>();
     Stamina = Player->FindComponentByClass<UStaminaComponent>();
     Temperature = Player->FindComponentByClass<UTemperatureComponent>();
-    // Needs: typed pointers exist (UHungerComponent/UThirstComponent), but both derive UNeedComponent – reicht hier:
-    Hunger = Player->FindComponentByClass<UNeedComponent>(); // first found; we’ll reassign properly below
-    Thirst = nullptr;
 
-    // Better: find exact types
+    // Needs: beide gezielt suchen (falls du spezialisierte Komponenten hast)
+    Hunger = nullptr;
+    Thirst = nullptr;
     if (UHungerComponent* H = Player->FindComponentByClass<UHungerComponent>()) Hunger = H;
     if (UThirstComponent* T = Player->FindComponentByClass<UThirstComponent>()) Thirst = T;
 
-    // Bind events
+    // Bind events (nur wenn vorhanden)
     if (Health.IsValid())
         Health->OnHealthChanged.AddDynamic(this, &UHUDWidget::OnHealthChanged);
+
     if (Stamina.IsValid())
         Stamina->OnStaminaChanged.AddDynamic(this, &UHUDWidget::OnStaminaChanged);
+
     if (Hunger.IsValid())
         Hunger->OnNeedChanged.AddDynamic(this, &UHUDWidget::OnNeedChanged);
+
     if (Thirst.IsValid())
         Thirst->OnNeedChanged.AddDynamic(this, &UHUDWidget::OnNeedChanged);
+
     if (Temperature.IsValid())
     {
         Temperature->OnAmbientEffectiveChanged.AddDynamic(this, &UHUDWidget::OnAmbientTempChanged);
         Temperature->OnCoreTempChanged.AddDynamic(this, &UHUDWidget::OnBodyTempChanged);
+
+        // Sofort initiale Anzeige:
         UpdateTempTexts();
     }
 
@@ -84,7 +99,7 @@ void UHUDWidget::RefreshAll()
         SetBar(ThirstBar, ThirstText, Thirst->GetCurrent(), Thirst->GetMax());
 }
 
-void UHUDWidget::OnHealthChanged(UHealthComponent* Comp, float OldV, float NewV, float Delta, AActor* /*Instigator*/)
+void UHUDWidget::OnHealthChanged(UHealthComponent* Comp, float /*OldV*/, float NewV, float /*Delta*/, AActor* /*Instigator*/)
 {
     SetBar(HealthBar, HealthText, NewV, Comp ? Comp->GetMaxHealth() : 1.f);
 }
@@ -98,18 +113,19 @@ void UHUDWidget::OnNeedChanged(UNeedComponent* Comp, float /*OldV*/, float NewV,
 {
     if (!Comp) return;
 
-    // Decide which bar this is (by pointer compare)
     if (Comp == Hunger.Get())
         SetBar(HungerBar, HungerText, NewV, Comp->GetMax());
     else if (Comp == Thirst.Get())
         SetBar(ThirstBar, ThirstText, NewV, Comp->GetMax());
 }
 
-void UHUDWidget::OnAmbientTempChanged(float OldC, float NewC)
+// NEU: Event liefert (AmbientC, HeatC). Wir zeigen *Effective* = Ambient + Heat.
+void UHUDWidget::OnAmbientTempChanged(float AmbientC, float HeatContributionC)
 {
     if (AmbientTempText)
     {
-        AmbientTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f \u00B0C"), Temperature->GetAmbientTempC())));
+        const float Effective = AmbientC + HeatContributionC;
+        AmbientTempText->SetText(FormatDegC(Effective));
     }
 }
 
@@ -117,15 +133,31 @@ void UHUDWidget::OnBodyTempChanged(float NewCoreC)
 {
     if (BodyTempText)
     {
-        BodyTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f \u00B0C"), Temperature->GetBodyTempC())));
+        BodyTempText->SetText(FormatDegC(NewCoreC));
     }
 }
 
 void UHUDWidget::UpdateTempTexts()
 {
     if (!Temperature.IsValid()) return;
-    if (AmbientTempText) AmbientTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), Temperature->GetAmbientTempC())));
-    if (BodyTempText)    BodyTempText->SetText(FText::FromString(FString::Printf(TEXT("%.1f °C"), Temperature->GetBodyTempC())));
+
+    // Initiale Anzeige: wir haben in der Component Caches (LastAmbientC, LastHeatContributionC)
+    if (AmbientTempText)
+    {
+        const float Effective = Temperature->LastAmbientC + Temperature->LastHeatContributionC;
+        AmbientTempText->SetText(FormatDegC(Effective));
+    }
+
+    if (BodyTempText)
+    {
+        BodyTempText->SetText(FormatDegC(Temperature->GetBodyTempC()));
+    }
+}
+
+FText UHUDWidget::FormatDegC(float Value)
+{
+    // Unicode-robust, vermeidet Compiler-Warnungen/Encoding-Probleme
+    return FText::FromString(FString::Printf(TEXT("%.1f \u00B0C"), Value));
 }
 
 void UHUDWidget::SetBar(UProgressBar* Bar, UTextBlock* Txt, float Current, float Max)

@@ -65,10 +65,12 @@ float UTemperatureManager::GetAmbientTemperatureC(const FVector& WorldLocation) 
 float UTemperatureManager::ComputeHeatSourceContributionC(const FVector& WorldLocation) const
 {
     float Sum = 0.f;
+    int32 Count = 0;
     for (const TWeakObjectPtr<UHeatSourceComponent>& Weak : HeatSources)
     {
         const UHeatSourceComponent* S = Weak.Get();
         if (!S || !S->bEnabled) continue;
+        ++Count;
 
         const float Dist = FVector::Dist(WorldLocation, S->GetComponentLocation());
         if (Dist >= S->Radius || S->Radius <= 1.f) continue;
@@ -77,6 +79,7 @@ float UTemperatureManager::ComputeHeatSourceContributionC(const FVector& WorldLo
         const float Fall = FMath::Pow(FMath::Clamp(Alpha, 0.f, 1.f), S->FalloffExponent);
         Sum += S->TemperatureDeltaC * Fall;
     }
+    UE_LOG(LogTemp, Log, TEXT("[Temp] HeatSources=%d  HeatC=%.2f"), Count, Sum);
     return Sum;
 }
 
