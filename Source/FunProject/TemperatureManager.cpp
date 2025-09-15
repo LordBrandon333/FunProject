@@ -79,7 +79,7 @@ float UTemperatureManager::ComputeHeatSourceContributionC(const FVector& WorldLo
         const float Fall = FMath::Pow(FMath::Clamp(Alpha, 0.f, 1.f), S->FalloffExponent);
         Sum += S->TemperatureDeltaC * Fall;
     }
-    UE_LOG(LogTemp, Log, TEXT("[Temp] HeatSources=%d  HeatC=%.2f"), Count, Sum);
+    //UE_LOG(LogTemp, Log, TEXT("[Temp] HeatSources=%d  HeatC=%.2f"), Count, Sum);
     return Sum;
 }
 
@@ -89,27 +89,43 @@ void UTemperatureManager::ComputeBodyStep(
 {
     if (!Rules || Dt <= KINDA_SMALL_NUMBER) return;
 
-    // Effektive Umgebung inkl. HeatSources wird außerhalb addiert
-    // Skin -> Ambient Annäherung
+    // --- 1) Skin ↔ Ambient (Konvektion/Leitung), Nässe verstärkt Austausch ---
     const float Insulation = FMath::Max(0.1f, InsulationClo); // nie 0
-    const float ExchangeMult = 1.f + Rules->WetnessAmplifier * FMath::Clamp(Wetness01, 0.f, 1.f);
-    const float SkinTau = FMath::Max(1.f, Rules->SkinTimeConstantSeconds * Insulation / ExchangeMult);
+    const float WetAmplifier = 1.f + Rules->WetnessAmplifier * FMath::Clamp(Wetness01, 0.f, 1.f);
+    const float SkinTau = FMath::Max(1.f, Rules->SkinTimeConstantSeconds * Insulation / WetAmplifier);
 
     const float dSkin = (AmbientC - Skin) * (Dt / SkinTau);
     Skin += dSkin;
 
-    // Core ↔ Skin + Metabolik
+    // --- 2) Core ↔ Skin (Wärmeleitung in den Körper) ---
     const float CoreTau = FMath::Max(1.f, Rules->CoreTimeConstantSeconds);
     const float dCoreExchange = (Skin - Core) * (Dt / CoreTau);
 
+    // --- 3) Metabolische Grundlast (Ruhe ↔ Sprint) ---
     const float HeatGainPerSec = FMath::Lerp(
         Rules->RestingHeatGainCPerMinute,
         Rules->SprintingHeatGainCPerMinute,
-        FMath::Clamp(Metabolic01, 0.f, 1.f)) / 60.f;
+        FMath::Clamp(Metabolic01, 0.f, 1.f)
+    ) / 60.f;
 
-    Core += dCoreExchange + HeatGainPerSec * Dt;
+    // --- 4) Thermoregulation (Proportional auf Zieltemperatur) ---
+    // Positiver Error => zu kalt => zusätzliche Heizung; negativer Error => zu warm => Kühlung
+    float ThermoPerSec = 0.f;
+    if (Rules->ThermoregulationGainCPerMinutePerDeg > 0.f)
+    {
+        const float DegError = (Rules->TargetCoreTempC - Core); // + wenn zu kalt
+        const float ThermoPerMin = FMath::Clamp(
+            DegError * Rules->ThermoregulationGainCPerMinutePerDeg,
+            -Rules->ThermoregulationMaxAbsCPerMinute,
+            +Rules->ThermoregulationMaxAbsCPerMinute
+        );
+        ThermoPerSec = ThermoPerMin / 60.f;
+    }
 
-    // Hard-Limits
+    // --- 5) Core fortschreiben + Limits ---
+    Core += dCoreExchange + (HeatGainPerSec + ThermoPerSec) * Dt;
+
+    // Sanfte physikalische Grenzen
     Core = FMath::Clamp(Core, Rules->MinCoreTempC, Rules->MaxCoreTempC);
 }
 

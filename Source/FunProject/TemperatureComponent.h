@@ -34,6 +34,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
     float LastHeatContributionC = 0.f;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
+    float LastOperativeAmbientC = 20.f;
+
     // Events
     UPROPERTY(BlueprintAssignable)
     FOnCoreTemperatureChanged OnCoreTempChanged;
@@ -58,6 +61,9 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Temperature")
     float GetBodyTempC() const { return CoreTempC; }                            // Core
+
+    UFUNCTION(BlueprintPure, Category = "Temperature")
+    float GetOperativeAmbientTempC() const { return LastOperativeAmbientC; }
 
 private:
     TWeakObjectPtr<class UTemperatureManager> Manager;

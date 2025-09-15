@@ -119,13 +119,12 @@ void UHUDWidget::OnNeedChanged(UNeedComponent* Comp, float /*OldV*/, float NewV,
         SetBar(ThirstBar, ThirstText, NewV, Comp->GetMax());
 }
 
-// NEU: Event liefert (AmbientC, HeatC). Wir zeigen *Effective* = Ambient + Heat.
 void UHUDWidget::OnAmbientTempChanged(float AmbientC, float HeatContributionC)
 {
-    if (AmbientTempText)
+    if (AmbientTempText && Temperature.IsValid())
     {
-        const float Effective = AmbientC + HeatContributionC;
-        AmbientTempText->SetText(FormatDegC(Effective));
+        // Realistische Anzeige: operative Temperatur (Ambient + gedämpfter Strahlungsanteil)
+        AmbientTempText->SetText(FormatDegC(Temperature->GetOperativeAmbientTempC()));
     }
 }
 
@@ -140,18 +139,10 @@ void UHUDWidget::OnBodyTempChanged(float NewCoreC)
 void UHUDWidget::UpdateTempTexts()
 {
     if (!Temperature.IsValid()) return;
-
-    // Initiale Anzeige: wir haben in der Component Caches (LastAmbientC, LastHeatContributionC)
     if (AmbientTempText)
-    {
-        const float Effective = Temperature->LastAmbientC + Temperature->LastHeatContributionC;
-        AmbientTempText->SetText(FormatDegC(Effective));
-    }
-
+        AmbientTempText->SetText(FormatDegC(Temperature->GetOperativeAmbientTempC()));
     if (BodyTempText)
-    {
         BodyTempText->SetText(FormatDegC(Temperature->GetBodyTempC()));
-    }
 }
 
 FText UHUDWidget::FormatDegC(float Value)

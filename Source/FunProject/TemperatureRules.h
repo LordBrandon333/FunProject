@@ -29,29 +29,49 @@ public:
     float TargetCoreTempC = 37.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float MinCoreTempC = 28.f;
+    float MinCoreTempC = 32.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float MaxCoreTempC = 42.5f;
+    float MaxCoreTempC = 40.5f;
 
     // Zeitkonstanten (je kleiner, desto schneller Annäherung)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float CoreTimeConstantSeconds = 300.f;
+    float CoreTimeConstantSeconds = 1800.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float SkinTimeConstantSeconds = 90.f;
+    float SkinTimeConstantSeconds = 120.f;
 
     // Wind-/Nässe-Einfluss (dimensionslos)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
     float WindChillCoefficient = 0.5f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float WetnessAmplifier = 3.0f;
+    float WetnessAmplifier = 2.0f;
 
     // Metabolische Wärmezufuhr (in °C pro Minute; wird auf Core addiert)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float RestingHeatGainCPerMinute = 0.02f;
+    float RestingHeatGainCPerMinute = 0.06f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
-    float SprintingHeatGainCPerMinute = 0.20f;
+    float SprintingHeatGainCPerMinute = 0.35f;
+
+    //Thermoregulation
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
+    float ThermoregulationGainCPerMinutePerDeg = 0.12f;
+    // zusätzliche Heiz-/Kühlrate je °C Abweichung vom Ziel (37 °C)
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body")
+    float ThermoregulationMaxAbsCPerMinute = 0.60f;
+
+    // Wie stark Strahlungswärme (HeatSources) die "gefühlte" Umgebung beeinflusst (0..1)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat Sources")
+    float RadiantToOperativeWeight = 0.35f;   // 0.3–0.5 ist gut
+
+    // Kleidung dämpft Strahlung (höhere CLO -> weniger Effekt)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat Sources")
+    float RadiantInsulationFactor = 0.6f;     // 0.4–0.8
+
+    // Obergrenze des zusätzlichen °C-Adders durch Strahlung (gegen unrealistische Werte)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat Sources")
+    float MaxRadiantAddC = 25.f;              // 15–30
 };

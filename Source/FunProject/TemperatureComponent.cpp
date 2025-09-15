@@ -65,22 +65,32 @@ void UTemperatureComponent::TickComponent(float Dt, ELevelTick TickType, FActorC
     // Basis + Heat getrennt berechnen
     const float AmbientC = Manager->GetAmbientTemperatureC(Loc);
     const float HeatC = Manager->ComputeHeatSourceContributionC(Loc);
-    const float EffectiveAmbientC = AmbientC + HeatC;
+    
+    const UTemperatureRules* R = Manager->GetRules();
+    const float W = R ? R->RadiantToOperativeWeight : 0.35f;
+    const float K = R ? R->RadiantInsulationFactor : 0.6f;
+    const float CLO = FMath::Max(0.f, InsulationClo);
+
+    // gedämpfter Strahlungsanteil (Kleidung reduziert, und nach oben begrenzen)
+    float RadiantAdd = HeatC * W / (1.f + K * CLO);
+    if (R) RadiantAdd = FMath::Clamp(RadiantAdd, 0.f, R->MaxRadiantAddC);
+
+    // Operative Temperatur für die Haut
+    const float OperativeAmbientC = AmbientC + RadiantAdd;
 
     // Caches aktualisieren
     LastAmbientC = AmbientC;
     LastHeatContributionC = HeatC;
+    LastOperativeAmbientC = OperativeAmbientC;
 
-    // Körper mit *effektiver* Umgebung fortschreiben
-    Manager->ComputeBodyStep(CoreTempC, SkinTempC, InsulationClo, Metabolic01, Wetness01, EffectiveAmbientC, Dt);
+    // Körper mit *operativer* Umgebung fortschreiben (nicht mit 1:1 Ambient+Heat!)
+    Manager->ComputeBodyStep(CoreTempC, SkinTempC, InsulationClo, Metabolic01, Wetness01, OperativeAmbientC, Dt);
 
-    // Core-Event (nur bei Änderung)
+    // Events (lassen Ambient & Heat getrennt, damit UI/Debug flexibel bleibt)
     if (!FMath::IsNearlyEqual(CoreTempC, LastBroadcastCore, 0.01f))
     {
         LastBroadcastCore = CoreTempC;
         OnCoreTempChanged.Broadcast(CoreTempC);
     }
-
-    // Ambient-Event (immer senden; optional mit Threshold/Rate-Limit)
     OnAmbientEffectiveChanged.Broadcast(AmbientC, HeatC);
 }
