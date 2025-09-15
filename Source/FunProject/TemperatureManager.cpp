@@ -55,8 +55,8 @@ float UTemperatureManager::GetAmbientTemperatureC(const FVector& WorldLocation) 
     float AltitudeDelta = 0.f;
     if (Rules)
     {
-        const float DzMeters = (WorldLocation.Z - Rules->SeaLevelZ) / 100.f; // in 100m
-        AltitudeDelta = DzMeters * Rules->AltitudeLapseRateCPer100m;
+        const float DzHundredsOfMeters = (WorldLocation.Z - Rules->SeaLevelZ) / 10000.f; // in 100m
+        AltitudeDelta = DzHundredsOfMeters * Rules->AltitudeLapseRateCPer100m;
     }
 
     return Base + Diurnal + AltitudeDelta;
