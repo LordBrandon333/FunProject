@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataAsset.h"
+#include "Engine/DataTable.h"
+#include "Engine/Texture2D.h"
+#include "Engine/StaticMesh.h"
+#include "GameplayTagContainer.h"
 #include "ItemDataStructs.generated.h"
 
-class UTexture2D;
 class UItemAction;
 class UItemFragment;
 
@@ -55,16 +57,16 @@ struct FItemNumericData
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Numerics", meta = (ClampMin = "0.0"))
-    float Weight;
+    float Weight = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Numerics", meta = (ClampMin = "1"))
-    int32 MaxStackSize;
+    int32 MaxStackSize = 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Numerics")
-    bool bIsStackable;
+    bool bIsStackable = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Numerics", meta = (ClampMin = "0"))
-    int32 BaseValue;
+    int32 BaseValue = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -73,20 +75,44 @@ struct FItemAssetData
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Assets")
-    UTexture2D* Icon;
+    TObjectPtr<UTexture2D> Icon = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Assets")
-    UStaticMesh* Mesh;
+    TObjectPtr<UStaticMesh> Mesh = nullptr;
+};
+
+UENUM(BlueprintType)
+enum class EItemActionSlot : uint8
+{
+    Primary,
+    Secondary,
+    Tertiary
 };
 
 
 USTRUCT(BlueprintType)
-struct FItemDataClas
+struct FActionBinding
+{
+    GENERATED_BODY()
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Actions")
+    TSoftClassPtr<UItemAction> ActionClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Actions")
+    EItemActionSlot Slot = EItemActionSlot::Primary;
+};
+
+
+USTRUCT(BlueprintType)
+struct FItemDataRow : public FTableRowBase
 {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
-    EItemType ItemType;
+    FName ItemID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
+    EItemTypeClass ItemType;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
     EItemQuality ItemQuality;
@@ -99,4 +125,13 @@ struct FItemDataClas
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
     FItemAssetData AssetData;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
+    FGameplayTagContainer Tags; 
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
+    TArray<TSoftClassPtr<UItemFragment>> FragmentClasses;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Data")
+    TArray<FActionBinding> DefaultActions;
 };
