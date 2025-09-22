@@ -11,11 +11,11 @@
 #include "HealthComponent.h"
 #include "NeedComponent.h"
 #include "StaminaComponent.h"
-#include "InventoryComponent.h"
+//#include "InventoryComponent.h"
 #include "TemperatureComponent.h"
 #include "HUDWidget.h"
-#include "InventoryWidget.h"
-#include "HotbarWidget.h"
+//#include "InventoryWidget.h"
+//#include "HotbarWidget.h"
 #include "Blueprint/UserWidget.h"
 
 // Constructor
@@ -47,7 +47,7 @@ APlayerCharacter::APlayerCharacter()
     HungerComponent = CreateDefaultSubobject<UHungerComponent>(TEXT("HungerComponent"));
     ThirstComponent = CreateDefaultSubobject<UThirstComponent>(TEXT("ThirstComponent"));
     StaminaComponent = CreateDefaultSubobject<UStaminaComponent>(TEXT("StaminaComponent"));
-    InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+    //InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
     TemperatureComponent = CreateDefaultSubobject<UTemperatureComponent>(TEXT("TemperatureComponent"));
 }
 
@@ -81,14 +81,14 @@ void APlayerCharacter::BeginPlay()
         }
 
         // Hotbar
-        if (HotbarWidgetClass)
+        /*if (HotbarWidgetClass)
         {
             HotbarWidget = CreateWidget<UHotbarWidget>(PC, HotbarWidgetClass);
             if (HotbarWidget)
             {
                 HotbarWidget->AddToViewport(5);
                 if (InventoryComponent) HotbarWidget->InitializeForInventory(InventoryComponent);
-                // Range aus Component übernehmen
+                // Range aus Component ï¿½bernehmen
                 HotbarWidget->SetHotbarRange(0, InventoryComponent ? InventoryComponent->GetHotbarSize() : 4);
 
             }
@@ -110,7 +110,7 @@ void APlayerCharacter::BeginPlay()
             }
         }
 
-        if (HotbarWidget && InventoryWidget) HotbarWidget->SetInventoryUI(InventoryWidget);
+        if (HotbarWidget && InventoryWidget) HotbarWidget->SetInventoryUI(InventoryWidget);*/
     }
 
     if (HealthComponent)
@@ -145,6 +145,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
         if (IA_Crouch) EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCrouch);
         if (IA_Interact) EIC->BindAction(IA_Interact, ETriggerEvent::Started, this, &APlayerCharacter::HandleInteract);
 
+        /*
         // Inventory / Hotbar
         if (IA_ToggleInventory) EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
         if (IA_PrimaryUse)      EIC->BindAction(IA_PrimaryUse, ETriggerEvent::Started, this, &APlayerCharacter::PrimaryUse);
@@ -160,6 +161,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
         if (IA_Select8) EIC->BindAction(IA_Select8, ETriggerEvent::Started, this, &APlayerCharacter::Select8);
         if (IA_Select9) EIC->BindAction(IA_Select9, ETriggerEvent::Started, this, &APlayerCharacter::Select9);
         if (IA_Select0) EIC->BindAction(IA_Select0, ETriggerEvent::Started, this, &APlayerCharacter::Select0);
+        */
     }
 }
 
@@ -192,8 +194,10 @@ void APlayerCharacter::ToggleCrouch() { if (bIsCrouched) UnCrouch(); else Crouch
 void APlayerCharacter::HandleInteract() { if (InteractComponent) InteractComponent->TryInteract(); }
 
 // UI/Hotbar
+/*
 void APlayerCharacter::ToggleInventory()
 {
+    /*
     if (!InventoryWidget) return;
 
     const bool bShow = (InventoryWidget->GetVisibility() != ESlateVisibility::Visible &&
@@ -227,7 +231,7 @@ void APlayerCharacter::PrimaryUse()
     if (InventoryWidget && (InventoryWidget->GetVisibility() == ESlateVisibility::Visible ||
         InventoryWidget->GetVisibility() == ESlateVisibility::SelfHitTestInvisible))
     {
-        return; // im Inventar geöffnet nicht benutzen
+        return; // im Inventar geï¿½ffnet nicht benutzen
     }
 
     InventoryComponent->UseSelectedHotbarItem();
@@ -255,7 +259,7 @@ void APlayerCharacter::Select7() { SelectHotbarIndex(6); }
 void APlayerCharacter::Select8() { SelectHotbarIndex(7); }
 void APlayerCharacter::Select9() { SelectHotbarIndex(8); }
 void APlayerCharacter::Select0() { SelectHotbarIndex(9); }
-
+*/
 void APlayerCharacter::OnDied(UHealthComponent* /*Comp*/, AActor* /*KilledActor*/)
 {
     if (APlayerController* PC = Cast<APlayerController>(GetController()))

@@ -15,11 +15,11 @@ class UHealthComponent;
 class UHungerComponent;
 class UThirstComponent;
 class UStaminaComponent;
-class UInventoryComponent;
+//class UInventoryComponent;
 class UTemperatureComponent;
 class UHUDWidget;
-class UInventoryWidget;
-class UHotbarWidget;
+//class UInventoryWidget;
+//class UHotbarWidget;
 
 UCLASS()
 class FUNPROJECT_API APlayerCharacter : public ACharacter
@@ -53,8 +53,8 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UStaminaComponent* StaminaComponent;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UInventoryComponent* InventoryComponent;
+    //UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    //UInventoryComponent* InventoryComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UTemperatureComponent* TemperatureComponent;
@@ -87,12 +87,12 @@ protected:
 
     // === UI Classes ===
     UPROPERTY(EditDefaultsOnly, Category = "UI") TSubclassOf<UHUDWidget>       HUDWidgetClass;
-    UPROPERTY(EditDefaultsOnly, Category = "UI") TSubclassOf<UInventoryWidget> InventoryWidgetClass;
-    UPROPERTY(EditDefaultsOnly, Category = "UI") TSubclassOf<UHotbarWidget>    HotbarWidgetClass;
+    //UPROPERTY(EditDefaultsOnly, Category = "UI") TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+    //UPROPERTY(EditDefaultsOnly, Category = "UI") TSubclassOf<UHotbarWidget>    HotbarWidgetClass;
 
     UPROPERTY() UHUDWidget* HUDWidget = nullptr;
-    UPROPERTY() UInventoryWidget* InventoryWidget = nullptr;
-    UPROPERTY() UHotbarWidget* HotbarWidget = nullptr;
+    //UPROPERTY() UInventoryWidget* InventoryWidget = nullptr;
+    //UPROPERTY() UHotbarWidget* HotbarWidget = nullptr;
 
     // === Movement Vars ===
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement") float CrouchSpeed = 200.f;
@@ -110,13 +110,14 @@ protected:
     void HandleInteract();
 
     // UI/Hotbar
+    /*
     void ToggleInventory();
     void PrimaryUse();
     void HotbarScroll(const FInputActionValue& Value);
     void SelectHotbarIndex(int32 Index);
     void Select1(); void Select2(); void Select3(); void Select4(); void Select5();
     void Select6(); void Select7(); void Select8(); void Select9(); void Select0();
-
+    */
     // === OnDeath ===
     UFUNCTION() void OnDied(UHealthComponent* Comp, AActor* KilledActor);
 };
