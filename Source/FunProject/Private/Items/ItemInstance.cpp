@@ -43,6 +43,16 @@ bool UItemInstance::InitializeFromDataTable(UDataTable* InTable, FName InItemID)
 }
 
 
+UItemFragment* UItemInstance::FindFragmentByClass(TSubclassOf<UItemFragment> FragmentClass) const
+{
+	if (!*FragmentClass) return nullptr;
+	for (UItemFragment* F : Fragments)
+	{
+		if (F && F->IsA(FragmentClass)) return F;
+	}
+	return nullptr;
+}
+
 EItemActionResult UItemInstance::UseSlot(EItemActionSlot Slot, AActor* User)
 {
 	if (TObjectPtr<UItemAction>* ActPtr = Actions.Find(Slot))

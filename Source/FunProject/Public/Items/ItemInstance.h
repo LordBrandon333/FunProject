@@ -37,6 +37,9 @@ public:
 	{
 		for (UItemFragment* F : Fragments) if (T* As = Cast<T>(F)) return As; return nullptr;
 	}
+
+	UFUNCTION(BlueprintCallable)
+	UItemFragment* FindFragmentByClass(TSubclassOf<UItemFragment> FragmentClass) const;
 	
 	UFUNCTION(BlueprintCallable)
 	EItemActionResult UseSlot(EItemActionSlot Slot, AActor* User);

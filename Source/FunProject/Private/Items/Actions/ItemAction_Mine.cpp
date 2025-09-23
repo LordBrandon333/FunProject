@@ -5,6 +5,11 @@
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+UItemAction_Mine::UItemAction_Mine()
+{
+	RequiredFragments = { UItemFragment_Tool::StaticClass(), UItemFragment_Durability::StaticClass() };
+}
+
 EItemActionResult UItemAction_Mine::Execute_Implementation(AActor* User)
 {
 	if (!OwnerInstance || !User) return EItemActionResult::Failed;
